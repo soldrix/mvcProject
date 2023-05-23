@@ -16,10 +16,10 @@ class AuthControllers extends Controller
     }
     public function login(Request $request)
     {
-//        if($this->getAuth()){
-//            $this->redirect('/home');
-//            exit("Already authenticated.");
-//        }
+        if($this->getAuth()){
+            $this->redirect('/home');
+            exit("Already authenticated.");
+        }
         //pour changer le layout exemple auth pour le layout auth.php
         $this->setLayout('auth');
         if($request->isPost()){
