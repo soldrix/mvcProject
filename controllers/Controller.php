@@ -20,4 +20,11 @@ class Controller
     {
         return Application::$app->router->renderView($view, $params);
     }
+    public function redirect($url)
+    {
+        Application::$app->response->redirect($url);
+    }
+    public function getAuth(){
+        return Application::$app->isGuest();
+    }
 }

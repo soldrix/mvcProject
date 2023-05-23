@@ -2,26 +2,50 @@
 
 namespace App\controllers;
 
-use App\lscore\Application;
 use App\lscore\Request;
 
 class SiteController extends Controller
 {
+    public function redirectHome()
+    {
+        $this->redirect('/home');
+    }
     public  function index()
     {
-        $params = [
-            "name" => "jean"
-        ];
-        return $this->render('home',$params);
+        return $this->render('home');
     }
-    public  function contact()
+    public  function contacts()
     {
-        return $this->render('contact');
+        return $this->render('contacts');
     }
 
     public  function HandleContact(Request $request)
     {
         $body = $request->getBody();
         echo $body->subject;
+    }
+    public function profil()
+    {
+        return $this->render('profil');
+    }
+    public function actualites()
+    {
+        return $this->render('actualites');
+    }
+    public function infos_administratives()
+    {
+        return $this->render('infos_administratives');
+    }
+    public function ventes_traductions()
+    {
+        return $this->render('ventes_traductions');
+    }
+    public function catalogues_sites()
+    {
+        return $this->render('catalogues_sites');
+    }
+    public function FAQ()
+    {
+        return $this->render('FAQ');
     }
 }
