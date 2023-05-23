@@ -48,4 +48,7 @@ class SiteController extends Controller
     {
         return $this->render('FAQ');
     }
+    public function test(){
+        return $this->render('contact');
+    }
 }

@@ -11,4 +11,11 @@ $app->router->post('/login', [\App\controllers\AuthControllers::class, 'login'],
 
 $app->router->post('/logout', [\App\controllers\AuthControllers::class, 'logout']);
 
+$app->middleware->middlewares('authMiddleware::authenticate',function($route){
+
+    $route->get('/test', [SiteController::class, 'test']);
+    $route->GroupController(SiteController::class,function ($route){
+        $route->get('/toto' , 'test');
+    });
+});
 

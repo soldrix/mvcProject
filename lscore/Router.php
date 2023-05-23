@@ -15,20 +15,18 @@ class Router
 {
     public Request $request;
     public Response $response;
-    public static Router $route;
-    protected array $routes = [];
-    protected array $routesNotAuth = [];
-
+    protected $routes = [];
+    protected  $routesNotAuth = [];
     /**
      * @param Request $request
      * @param Response $response
      */
-    public function __construct(Request $request, Response $response)
+    public function __construct(Request $request, Response $response )
     {
-        self::$route = $this;
         $this->request = $request;
         $this->response = $response;
     }
+
     /**
      *Cette fonction permet récupérer les routes de type GET et les ajoutes dans un tableau.
      * */
@@ -53,6 +51,21 @@ class Router
             $this->routes['post'][$path] = $callback;
         }
     }
+    public function GroupController($controller,$callable){
+        $app = new class {
+            public string $controller = "";
+            public function get(string $name, string $fn, $auth = false){
+                Application::$app->router->get($name,[$this->controller,$fn],$auth);
+            }
+            public function post(string $name, string $fn, $auth = false){
+                Application::$app->router->post($name,[$this->controller,$fn],$auth);
+            }
+        };
+
+        $app->controller = $controller;
+        return $callable($app);
+    }
+
     /**
      *Cette fonction permet de d'utiliser et verifier les routes par rapport à la requête en cours.
      * */
