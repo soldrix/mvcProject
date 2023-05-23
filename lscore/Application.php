@@ -2,6 +2,7 @@
 
 namespace App\lscore;
 use App\controllers\Controller;
+use App\lscore\exception\NotFoundException;
 use App\lscore\Middlewares\middleware;
 
 /**
@@ -31,8 +32,14 @@ class Application
     }
     public function run()
     {
+        if($this->isGuest()){
+            $this->router->setLayout("auth");
+        }else{
+            $this->router->setLayout();
+        }
         try {
             $value = $this->router->resolve();
+
             //pour changer le type de contenu de la requête
             if(gettype($value) !== 'string'){
                 json_encode($value);
@@ -45,8 +52,9 @@ class Application
             }
             echo $value;
         }catch (\Exception $e){
+            $view = ($this->isGuest()) ? "login" : "_404";
             $this->response->setStatusCode($e->getCode());
-            echo $this->router->renderView('_404',[
+            echo $this->router->renderView($view,[
                 "exceptions" => $e
             ]);
         }

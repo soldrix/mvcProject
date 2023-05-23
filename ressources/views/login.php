@@ -1,5 +1,5 @@
 <div class="col-12 col-lg-6 mx-auto mt-5">
-        <form action="" method="post" class="d-flex flex-column align-items-center">
+        <form action="/login" method="post" class="d-flex flex-column align-items-center">
             <div class="mb-3">
                 <input type="text" name="email" value="<?= $data->email ?? '' ?>" placeholder="Adresse mail" class="input-login <?php echo (isset($errors['email']) ) ? 'is-invalid' : ''  ?>">
                 <?php

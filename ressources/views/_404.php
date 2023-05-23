@@ -2,7 +2,7 @@
     <h1 class="align-self-center"><?= $exceptions->getCode() . " - " . $exceptions->getMessage()  ?></h1>
     <?php
     if($exceptions->getCode() === 301){
-        Header('location: /home');
+        Header('location: /');
     }
     ?>
 </div>

@@ -16,7 +16,7 @@ class Router
     public Request $request;
     public Response $response;
     protected $routes = [];
-    protected  $routesNotAuth = [];
+    protected $layout = "app";
     /**
      * @param Request $request
      * @param Response $response
@@ -30,35 +30,24 @@ class Router
     /**
      *Cette fonction permet récupérer les routes de type GET et les ajoutes dans un tableau.
      * */
-    public function get($path, $callback, $notAuth = false){
-        if ($notAuth !== false){
-            //ajoute la route dans le tableau routesNotAuth car la route n'a pas besoin de connexion.
-            $this->routesNotAuth['get'][$path] = $callback;
-        }else{
+    public function get($path, $callback){
             //ajoute la route dans le tableau routes car la route a besoin d'une connexion.
             $this->routes['get'][$path] = $callback;
-        }
     }
     /**
      *Cette fonction permet récupérer les routes de type POST et les ajoutes dans un tableau.
      * */
-    public function post($path, $callback, $notAuth = false){
-        if ($notAuth !== false){
-            //ajoute la route dans le tableau routesNotAuth car la route n'a pas besoin de connexion.
-            $this->routesNotAuth['post'][$path] = $callback;
-        }else{
-            //ajoute la route dans le tableau routes car la route a besoin d'une connexion.
+    public function post($path, $callback){
             $this->routes['post'][$path] = $callback;
-        }
     }
     public function GroupController($controller,$callable){
         $app = new class {
             public string $controller = "";
-            public function get(string $name, string $fn, $auth = false){
-                Application::$app->router->get($name,[$this->controller,$fn],$auth);
+            public function get(string $name, string $fn){
+                Application::$app->router->get($name,[$this->controller,$fn]);
             }
-            public function post(string $name, string $fn, $auth = false){
-                Application::$app->router->post($name,[$this->controller,$fn],$auth);
+            public function post(string $name, string $fn){
+                Application::$app->router->post($name,[$this->controller,$fn]);
             }
         };
 
@@ -77,15 +66,8 @@ class Router
         $method = $this->request->method();
         //Route avec connexion
         $callback = $this->routes[$method][$path] ?? null;
-        //Route sans connexion
-        $callbackNotAuth = $this->routesNotAuth[$method][$path] ?? null ;
-        //Vérifie si une connexion n'existe pas.
-        if(Application::$app->session->get('authStatus') === null){
-            //change de callback si le callback sans connexion est vide par la page de connexion.
-            $callback =  $callbackNotAuth ?? $this->routesNotAuth['get']['/login'];
-        }
         //Pour rediriger a la page par défaut si une connexion existe.
-        else if($callback === null && $callbackNotAuth !== null){
+         if($callback === null ){
             throw new RedirectionExecption();
         }
         //Pour retourner une page
@@ -99,7 +81,7 @@ class Router
             $callback[0] = $controller;
         }
         //Pour retourner une page not found si aucune route existe.
-        if($callback === null && $callbackNotAuth === null){
+        if($callback === null ){
             throw new NotFoundException();
         }
         //Pour utiliser la fonction du controller de la route
@@ -121,7 +103,7 @@ class Router
      * */
     protected function layoutContent()
     {
-        $layout = Application::$app->controller->layout ?? 'app';
+        $layout = $this->layout;
         ob_start();
         require_once Application::$ROUTE_DIR."/ressources/views/layouts/$layout.php";
         return ob_get_clean();
@@ -138,5 +120,9 @@ class Router
         ob_start();
         require_once Application::$ROUTE_DIR."/ressources/views/$view.php";
         return ob_get_clean();
+    }
+    public function setLayout($value = "app")
+    {
+        $this->layout = $value;
     }
 }

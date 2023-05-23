@@ -10,10 +10,9 @@ use App\lscore\Application;
  * */
 class Controller
 {
-    public String $layout = 'app';
-    public function setLayout($layout)
+    public function setLayout($layout = "app")
     {
-        $this->layout = $layout;
+        Application::$app->router->setLayout($layout);
     }
 
     public function render($view, $params = [])
@@ -25,6 +24,6 @@ class Controller
         Application::$app->response->redirect($url);
     }
     public function getAuth(){
-        return Application::$app->isGuest();
+        return !Application::$app->isGuest();
     }
 }
