@@ -32,7 +32,11 @@ class Application
     }
     public function run()
     {
-
+        if($this->isGuest()){
+            $this->router->setLayout("auth");
+        }else{
+            $this->router->setLayout();
+        }
         try {
             $value = $this->router->resolve();
 
@@ -48,13 +52,7 @@ class Application
             }
             echo $value;
         }catch (\Exception $e){
-            if($this->isGuest()){
-                $this->router->setLayout("auth");
-                $view = "login";
-            }else{
-                $this->router->setLayout();
-                $view = "_404";
-            }
+            $view = ($this->isGuest()) ? "login" : "_404";
             $this->response->setStatusCode($e->getCode());
             echo $this->router->renderView($view,[
                 "exceptions" => $e

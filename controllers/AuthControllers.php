@@ -57,7 +57,7 @@ class AuthControllers extends Controller
 //            if($validation->getErrors()) return $this->render('forgot_password',['errors' => $validation->getErrors(), 'data' => $request->getBody()]);
 //            //todo apres verification ...
 //        }
-        return $this->render('forgot_password');
+        return $this->render('register');
     }
     public function logout():void
     {
