@@ -6,6 +6,10 @@
     <title>app</title>
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../css/fontawesome.min.css">
+    <script src="../js/all.min.js" defer></script>
+    <script src="../js/jquery.min.js" defer></script>
+    <script src="../js/bootstrap.bundle.min.min.js" defer></script>
+    <meta name="csrf-token" content="<?=\App\lscore\Application::$app->csrfToken->generateToken()?>">
 </head>
 <body>
 <nav class="navbar navbar-expand-lg bg-light">
@@ -61,7 +65,6 @@
         </div>
     </div>
 </div>
-<script src="../js/all.min.js"></script>
-<script src="../js/bootstrap.bundle.min.min.js"></script>
+
 </body>
 </html>

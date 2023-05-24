@@ -20,6 +20,7 @@ class Application
     public Controller $controller;
     public Session $session;
     public middleware $middleware;
+    public csrfToken $csrfToken;
     public function __construct($rootPath)
     {
         self::$ROUTE_DIR = $rootPath;
@@ -29,6 +30,7 @@ class Application
         $this->session = new Session();
         $this->router  = new Router($this->request, $this->response);
         $this->middleware = new middleware();
+        $this->csrfToken = new csrfToken();
     }
     public function run()
     {
@@ -40,10 +42,19 @@ class Application
         try {
             $value = $this->router->resolve();
 
+
             //pour changer le type de contenu de la requête
-            if(gettype($value) !== 'string'){
+            if(gettype($value) !== 'string' && $value = ""){
                 json_encode($value);
                 if(json_last_error() === JSON_ERROR_NONE){
+                    if(!str_contains($this->request->getPath(),"api")){
+                        if(($_POST["csrf-token"] ?? $_SERVER['HTTP_X_CSRF_TOKEN'])  !== Application::$app->csrfToken->getToken()){
+                            $this->response->setStatusCode(403);
+                            $value = [
+                                "error" => "Invalid or missing CSRF token"
+                            ];
+                        }
+                    }
                     $value = json_encode($value);
                     Header('Content-type: application/json');
                 }
@@ -52,11 +63,16 @@ class Application
             }
             echo $value;
         }catch (\Exception $e){
-            $view = ($this->isGuest()) ? "login" : "_404";
-            $this->response->setStatusCode($e->getCode());
-            echo $this->router->renderView($view,[
-                "exceptions" => $e
-            ]);
+            if(!str_contains($this->request->getPath(),"api")){
+                $view = ($this->isGuest()) ? "login" : "_404";
+                $this->response->setStatusCode($e->getCode());
+                echo $this->router->renderView($view,[
+                    "exceptions" => $e
+                ]);
+            }else{
+                echo "Route not found.";
+            }
+
         }
     }
 
@@ -83,6 +99,7 @@ class Application
 
     public function logout()
     {
+        $this->csrfToken->resetToken();
         $this->session->remove('authStatus');
     }
     public function isGuest()
