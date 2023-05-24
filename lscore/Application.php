@@ -34,11 +34,7 @@ class Application
     }
     public function run()
     {
-        if($this->isGuest()){
-            $this->router->setLayout("auth");
-        }else{
-            $this->router->setLayout();
-        }
+        $this->router->setLayout(($this->isGuest()) ? "auth" : "app");
         try {
             $value = $this->router->resolve();
 
@@ -65,7 +61,7 @@ class Application
         }catch (\Exception $e){
             if(!str_contains($this->request->getPath(),"api")){
                 $view = ($this->isGuest()) ? "login" : "_404";
-                $this->response->setStatusCode($e->getCode());
+                $this->response->setStatusCode(($this->isGuest()) ? 308 : $e->getCode());
                 echo $this->router->renderView($view,[
                     "exceptions" => $e
                 ]);

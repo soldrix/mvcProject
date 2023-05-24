@@ -14,7 +14,7 @@ class AuthControllers extends Controller
         $this->setLayout('auth');
         return $this->render('login');
     }
-    public function login(Request $request)
+    public function login()
     {
         if($this->getAuth()){
             $this->redirect('/home');
@@ -22,19 +22,21 @@ class AuthControllers extends Controller
         }
         //pour changer le layout exemple auth pour le layout auth.php
         $this->setLayout('auth');
-        if($request->isPost()){
-            $validation = new Validation();
-            //pour valider les données par rapport aux règles,
-            // Nous pouvons changer le message d'erreur par défaut pour une règle ou pour une valeur d'une règle, exemple :  email.required => "champs vide"
-            $validation->validate($request->getBody(),[
-                "password" => "required",
-                "email" => ["required", "email"]
-            ]);
-            if($validation->getErrors()) return $this->render('login',['errors' => $validation->getErrors(), 'data' => $request->getBody()]);
-            Application::$app->login();
-            $this->redirect('/home');
-        }
         return $this->render('login');
+    }
+    public function sendFormLogin(Request $request)
+    {
+        $validation = new Validation();
+        //pour valider les données par rapport aux règles,
+        // Nous pouvons changer le message d'erreur par défaut pour une règle ou pour une valeur d'une règle, exemple :  email.required => "champs vide"
+        $validation->validate($request->getBody(),[
+            "password" => "required",
+            "email" => ["required", "email"]
+        ]);
+        if($validation->getErrors()) return $this->render('login',['errors' => $validation->getErrors(), 'data' => $request->getBody()]);
+        Application::$app->login();
+        $this->redirect('/home');
+        die();
     }
     public function register()
     {
@@ -63,5 +65,6 @@ class AuthControllers extends Controller
     {
         Application::$app->logout();
         $this->redirect('/login');
+        die();
     }
 }

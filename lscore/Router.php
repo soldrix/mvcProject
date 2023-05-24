@@ -78,7 +78,7 @@ class Router
 //        //Pour rediriger a la page par défaut si une connexion existe.
         if($method === "post" && $callback === null && !str_contains($this->request->getPath(),"api")){
             $callback = $this->routes['get'][$path];
-            trigger_error("Route not found.");
+            error_log("Route not found.");
         }
         //Pour retourner une page
         if(is_string($callback)){
