@@ -1,13 +1,10 @@
 // Requis
 var gulp = require('gulp'),
-    cssbeautify = require('gulp-cssbeautify'),
     less = require('gulp-less'),
-    concat = require('gulp-concat'),
     uglify = require('gulp-uglify'),
     rename = require('gulp-rename'),
     cleanCSS = require('gulp-clean-css'),
     clean = require('gulp-clean'),
-    csscomb = require('gulp-csscomb'),
     csso = require('gulp-csso'),
     autoprefixer = require('gulp-autoprefixer'),
     es = require('event-stream');
@@ -60,7 +57,6 @@ async function styles(){
         gulp.src(paths.styles.src.less)
             .pipe(less())
             .pipe(cleanCSS())
-            .pipe(cssbeautify({indent: '  '}))
             .pipe(autoprefixer())
             // pass in options to the stream
             .pipe(csso())
@@ -70,8 +66,6 @@ async function styles(){
             .pipe(gulp.dest(paths.styles.dest)),
         gulp.src(paths.styles.src.css)
             .pipe(cleanCSS())
-
-            .pipe(cssbeautify({indent: '  '}))
             .pipe(autoprefixer())
             // pass in options to the stream
             .pipe(csso())
