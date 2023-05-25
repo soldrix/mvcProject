@@ -60,6 +60,7 @@
                 <button type="button" class="btn btn-pink" onclick="event.preventDefault();
                          document.getElementById('logout-form').submit();">Continuer</button>
                 <form id="logout-form" action="/logout" method="POST" class="d-none">
+                    <?= \App\lscore\Application::$app->csrfToken->loadToken() ?>
                 </form>
             </div>
         </div>

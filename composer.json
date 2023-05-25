@@ -11,5 +11,8 @@
             "email": "egouillart@litesoft.fr"
         }
     ],
-    "require": {}
+    "require": {
+      "ext-pdo": "*",
+        "vlucas/phpdotenv": "^5.5"
+    }
 }

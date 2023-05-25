@@ -8,8 +8,10 @@ $app->router->post('/forgot-password', [\App\controllers\AuthControllers::class,
 $app->router->post('/login', [\App\controllers\AuthControllers::class, 'sendFormLogin']);
 
 $app->router->post('/logout', [\App\controllers\AuthControllers::class, 'logout']);
-$app->router->get('/register', 'register');
+$app->router->get('/register', [\App\controllers\AuthControllers::class, "registerForm"]);
+$app->router->post('/register', [\App\controllers\AuthControllers::class, "register"]);
 $app->router->get('/gettt', [SiteController::class, 'testApi']);
+
 $app->middleware->middlewares('authMiddleware::authenticate',function($route){
 
     $route->get('/contact', [SiteController::class, 'test']);

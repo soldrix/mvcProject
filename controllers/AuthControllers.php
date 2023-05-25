@@ -6,6 +6,7 @@ namespace App\controllers;
 use App\lscore\Application;
 use App\lscore\Request;
 use App\lscore\Validation;
+use App\Models\Users;
 
 class AuthControllers extends Controller
 {
@@ -38,11 +39,31 @@ class AuthControllers extends Controller
         $this->redirect('/home');
         die();
     }
-    public function register()
+    public function registerForm()
     {
-
+        if($this->getAuth()){
+            $this->redirect('/home');
+            exit("Already authenticated.");
+        }
+        //pour changer le layout exemple auth pour le layout auth.php
         $this->setLayout('auth');
         return $this->render('register');
+    }
+    public function register(Request $request)
+    {
+        $validation = new Validation();
+        $validation->validate($request->getBody(),[
+            "password" => "required",
+            "email" => ["required", "email"],
+            "first_name" => "required",
+            "last_name" => "required"
+        ]);
+        if($validation->getErrors()) return $this->render('register',['errors' => $validation->getErrors(), 'data' => $request->getBody()]);
+        $user = new Users();
+        $datas = $request->getBody();
+        $datas->password = password_hash($datas->password, PASSWORD_DEFAULT);
+        $user->Create($datas);
+        return $this->render('register', ["message" => "utilisateur créer avec succès !"]);
     }
     public function forgot_password(Request $request)
     {
@@ -60,6 +81,23 @@ class AuthControllers extends Controller
 //            //todo apres verification ...
 //        }
         return $this->render('register');
+    }
+
+    public function getUsers(){
+        $users = new Users();
+      return $users->get();
+    }
+    public function deleteUser(Request $request)
+    {
+        $users = new Users();
+        $users->delete($request->getBody()->id);
+    }
+
+    public function findUser(){
+        $users = new Users();
+        return $users->find([
+            "first_name" => "jean"
+        ]);
     }
     public function logout():void
     {
