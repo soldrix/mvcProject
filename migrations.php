@@ -1,9 +1,9 @@
 <?php
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 use App\lscore\Application;
 
-$dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv = \Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 $config = [
@@ -15,8 +15,6 @@ $config = [
         "DB_NAME" => $_ENV["DB_NAME"] ?? ''
     ]
 ];
-$app = new Application(dirname(__DIR__),$config);
-require_once __DIR__ . '/../ressources/routes/web.php';
-require_once __DIR__ . '/../ressources/routes/api.php';
+$app = new Application(__DIR__,$config);
 
-$app->run();
+$app->database->applyMigrations();

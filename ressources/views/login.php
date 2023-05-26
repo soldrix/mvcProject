@@ -1,5 +1,12 @@
 <div class="col-12 col-lg-6 mx-auto mt-5">
+        <?php
+            if(isset($datas)){
+                echo var_dump($datas);
+            }
+
+        ?>
         <form action="/login" method="post" class="d-flex flex-column align-items-center">
+            <?= \App\lscore\Application::$app->csrfToken->loadToken() ?>
             <div class="mb-3">
                 <input type="text" name="email" value="<?= $data->email ?? '' ?>" placeholder="Adresse mail" class="input-login <?php echo (isset($errors['email']) ) ? 'is-invalid' : ''  ?>">
                 <?php

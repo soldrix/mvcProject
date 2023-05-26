@@ -17,6 +17,7 @@ class Router
     public Response $response;
     protected $routes = [];
     protected $layout = "app";
+    protected $routePath = "";
     /**
      * @param Request $request
      * @param Response $response
@@ -26,29 +27,37 @@ class Router
         $this->request = $request;
         $this->response = $response;
     }
-
+    public function setPath($path)
+    {
+        $this->routePath = $path;
+    }
+    public function getRoutePath()
+    {
+        return $this->routePath;
+    }
     /**
      *Cette fonction permet récupérer les routes de type GET et les ajoutes dans un tableau.
      * */
     public function get($path, $callback){
             //ajoute la route dans le tableau routes car la route a besoin d'une connexion.
-            $this->routes['get'][$path] = $callback;
+            $this->routes['get'][$this->routePath.$path] = $callback;
     }
     /**
      *Cette fonction permet récupérer les routes de type POST et les ajoutes dans un tableau.
      * */
     public function post($path, $callback){
-            $this->routes['post'][$path] = $callback;
+            $this->routes['post'][$this->routePath.$path] = $callback;
     }
     public function GroupController($controller,$callable){
         $app = new class {
             public string $controller = "";
             public function get(string $name, string $fn){
-                Application::$app->router->get($name,[$this->controller,$fn]);
+                $application = Application::$app->router;
+                $application->get($application->getRoutePath().$name,[$this->controller,$fn]);
             }
             public function post(string $name, string $fn){
-                Application::$app->router->post($name,[$this->controller,$fn]);
-            }
+                $application = Application::$app->router;
+                $application->post($application->getRoutePath().$name,[$this->controller,$fn]);            }
         };
 
         $app->controller = $controller;
@@ -66,9 +75,10 @@ class Router
         $method = $this->request->method();
         //Route avec connexion
         $callback = $this->routes[$method][$path] ?? null;
-        //Pour rediriger a la page par défaut si une connexion existe.
-         if($callback === null ){
-            throw new RedirectionExecption();
+//        //Pour rediriger a la page par défaut si une connexion existe.
+        if($method === "post" && $callback === null && !str_contains($this->request->getPath(),"api")){
+            $callback = $this->routes['get'][$path];
+            error_log("Route not found.");
         }
         //Pour retourner une page
         if(is_string($callback)){

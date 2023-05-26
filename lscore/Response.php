@@ -11,5 +11,6 @@ class Response
     public function redirect($url):void
     {
         Header('Location: '.$url);
+        die();
     }
 }

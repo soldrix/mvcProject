@@ -1,0 +1,10 @@
+vendor
+.idea
+**/.idea
+node_modules
+.npmrc
+.DS_Store
+**/.DS_Store
+public/css/*
+public/js/*
+.env

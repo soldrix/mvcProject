@@ -6,7 +6,7 @@ use App\lscore\Request;
 
 class SiteController extends Controller
 {
-    public function redirectHome()
+    public function redirectHome():void
     {
         $this->redirect('/home');
     }
@@ -22,7 +22,7 @@ class SiteController extends Controller
     public  function HandleContact(Request $request)
     {
         $body = $request->getBody();
-        echo $body->subject;
+        return $body;
     }
     public function profil()
     {
@@ -50,5 +50,11 @@ class SiteController extends Controller
     }
     public function test(){
         return $this->render('contact');
+    }
+    public function testApi()
+    {
+        return [
+          "email" => "jean@gmail.com"
+        ];
     }
 }

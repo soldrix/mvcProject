@@ -2,7 +2,6 @@
 
 namespace App\lscore;
 use App\controllers\Controller;
-use App\lscore\exception\NotFoundException;
 use App\lscore\Middlewares\middleware;
 
 /**
@@ -20,7 +19,9 @@ class Application
     public Controller $controller;
     public Session $session;
     public middleware $middleware;
-    public function __construct($rootPath)
+    public csrfToken $csrfToken;
+    public Database $database;
+    public function __construct($rootPath, array $config)
     {
         self::$ROUTE_DIR = $rootPath;
         self::$app = $this;
@@ -29,19 +30,33 @@ class Application
         $this->session = new Session();
         $this->router  = new Router($this->request, $this->response);
         $this->middleware = new middleware();
+        $this->csrfToken = new csrfToken();
+        $this->database = new Database($config['db']);
     }
     public function run()
     {
-        if($this->isGuest()){
-            $this->router->setLayout("auth");
-        }else{
-            $this->router->setLayout();
-        }
+        $this->router->setLayout(($this->isGuest()) ? "auth" : "app");
         try {
-            $value = $this->router->resolve();
+            if(!str_contains($this->request->getPath(),"api")){
+                if($this->request->method() === "post" && ($_POST["csrf-token"] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? "")  !== Application::$app->csrfToken->getToken()){
+                    $this->response->setStatusCode(403);
+                    $value = [
+                        "error" => "Invalid or missing CSRF token"
+                    ];
+                }else{
+                    $value = $this->router->resolve();
+                    if(gettype($value) !== 'string'){
+                        $value = [
+                            "error" => "Invalid or missing CSRF token"
+                        ];
+                    }
+                }
+            }else{
+                $value = $this->router->resolve();
+            }
 
             //pour changer le type de contenu de la requête
-            if(gettype($value) !== 'string'){
+            if(gettype($value) !== 'string' && $value != ""){
                 json_encode($value);
                 if(json_last_error() === JSON_ERROR_NONE){
                     $value = json_encode($value);
@@ -52,11 +67,16 @@ class Application
             }
             echo $value;
         }catch (\Exception $e){
-            $view = ($this->isGuest()) ? "login" : "_404";
-            $this->response->setStatusCode($e->getCode());
-            echo $this->router->renderView($view,[
-                "exceptions" => $e
-            ]);
+            if(!str_contains($this->request->getPath(),"api")){
+                $view =  ($this->isGuest() && $this->request->method() !== "post") ? "login" : "_404";
+                $this->response->setStatusCode(($this->isGuest()) ? 308 : $e->getCode());
+                echo $this->router->renderView($view,[
+                    "exceptions" => $e
+                ]);
+            }else{
+                echo $e->getMessage();
+            }
+
         }
     }
 
@@ -83,6 +103,7 @@ class Application
 
     public function logout()
     {
+        $this->csrfToken->resetToken();
         $this->session->remove('authStatus');
     }
     public function isGuest()
