@@ -3,7 +3,6 @@
 namespace App\lscore;
 
 use PDO;
-use PDOException;
 
 class Database
 {
@@ -24,6 +23,8 @@ class Database
     public function applyMigrations()
     {
         $this->createMigrationsTable();
+        $this->deleteMigrations();
+        $this->log("All migrations are deleted");
         $appliedMigrations = $this->getAppliedMigrations();
         $newMigrations = [];
         $files = scandir(Application::$ROUTE_DIR.'/migrations');
@@ -36,15 +37,19 @@ class Database
             require_once Application::$ROUTE_DIR.'/migrations/'.$migration;
             $classname = pathinfo($migration, PATHINFO_FILENAME);
             $instance = new $classname();
-            $this->log("Applying migration $migration");
-            $instance->up();
-            $this->log("Applied migration $migration");
+                $this->log("Deleting migration $migration");
+                $instance->down();
+                $this->log("Deleted migration $migration");
+                $this->log("Applying migration $migration");
+                $instance->up();
+                $this->log("Applied migration $migration");
+
             $newMigrations[] = $migration;
         }
 
         if(!empty($newMigrations)){
             $this->saveMigrations($newMigrations);
-        }else {
+        }else{
             $this->log("All migrations are applied");
         }
 
@@ -64,6 +69,10 @@ class Database
        $statement =  $this->pdo->prepare("SELECT migration FROM migrations");
        $statement->execute();
        return $statement->fetchAll(\PDO::FETCH_COLUMN);
+    }
+    public function deleteMigrations(){
+        $statement = $this->pdo->prepare("DELETE FROM migrations;");
+        $statement->execute();
     }
     public function saveMigrations(array $migrations)
     {

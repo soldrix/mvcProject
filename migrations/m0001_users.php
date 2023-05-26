@@ -19,6 +19,6 @@ class m0001_users
     {
         $db = \App\lscore\Application::$app->database;
         $sql = "DROP TABLE users;";
-        $db->pdo->execute($sql);
+        $db->pdo->exec($sql);
     }
 }
