@@ -99,6 +99,25 @@ class AuthControllers extends Controller
             "first_name" => "jean"
         ]);
     }
+    public function userUpdate()
+    {
+        $users = new Users();
+        $users->update([
+            "first_name" => "jean",
+            "last_name" => "aze"
+        ],
+        [
+            "id" => 1
+        ]);
+    }
+    public function testJoin()
+    {
+        $users = new Users();
+        return $users->join("left", "voitures", "id", "id_users", "=", [
+            "users.first_name",
+            "voitures.*"
+        ]);
+    }
     public function logout():void
     {
         Application::$app->logout();
