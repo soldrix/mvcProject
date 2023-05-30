@@ -23,8 +23,11 @@ class Database
     public function applyMigrations()
     {
         $this->createMigrationsTable();
-        $this->deleteMigrations();
-        $this->log("All migrations are deleted");
+        trigger_error(json_encode(count($this->getAppliedMigrations())));
+        if(count($this->getAppliedMigrations()) > 0){
+            $this->deleteMigrations();
+            $this->log("All migrations are deleted");
+        }
         $appliedMigrations = $this->getAppliedMigrations();
         $newMigrations = [];
         $files = scandir(Application::$ROUTE_DIR.'/migrations');
@@ -37,12 +40,15 @@ class Database
             require_once Application::$ROUTE_DIR.'/migrations/'.$migration;
             $classname = pathinfo($migration, PATHINFO_FILENAME);
             $instance = new $classname();
+            if(isset($appliedMigrations[$migration])){
                 $this->log("Deleting migration $migration");
                 $instance->down();
                 $this->log("Deleted migration $migration");
-                $this->log("Applying migration $migration");
-                $instance->up();
-                $this->log("Applied migration $migration");
+            }
+
+            $this->log("Applying migration $migration");
+            $instance->up();
+            $this->log("Applied migration $migration");
 
             $newMigrations[] = $migration;
         }
@@ -88,5 +94,46 @@ class Database
     {
         echo "[" . date("Y-m-d H:i:s") . "] - " . $message.PHP_EOL;
     }
+    public function testCreateTable(string $name,array $array)
+    {
+        $tempArray = [];
+        $columnName = [];
+        $nullable = false;
+        foreach ($array as $column => $options){
+            array_push($columnName, $column);
+            foreach ($options as $key => $data){
+                if(strtoupper($key) === "DEFAULT"){
+                    if(strtoupper($data) === "CURRENT_TIMESTAMP"){
+                         array_push($tempArray[$column],$data);
+                    }else{
+                        array_push($tempArray[$column],"'" .str_replace("'","\'",str_replace('"','\"',$data))."'");
+                    }
+                }else{
+                    $data = strtoupper($data);
+                    if (strtoupper($key) === "VARCHAR" || strtoupper($key) === "CHAR"){
+                        array_push($tempArray[$column],$key."(".$data.")");
+                    }elseif($data === "PRIMARY"){
+                        array_push($tempArray[$column],"PRIMARY KEY");
+                    }elseif($data === "AI"){
+                        array_push($tempArray[$column],"AUTO_INCREMENT");
+                    }elseif($data === "ID"){
+                       array_push($tempArray[$column],"INT PRIMARY KEY");
+                    }elseif($data === "NULL"){
+                        $nullable = true;
+                    }else{
+                        array_push($tempArray[$column], $data);
+                    }
+                }
 
+            }
+        }
+        trigger_error(json_encode($tempArray));
+        array_push($tempArray,($nullable === false) ? ' NOT NULL,' : ' NULL,');
+        $separation = implode(' ', $tempArray);
+        trigger_error(json_encode($separation));
+        $sql = "CREATE TABLE $name (
+                        ".implode(" ".$separation,$columnName)."
+                   ) ENGINE=INNODB;";
+        trigger_error($sql);
+    }
 }
