@@ -84,4 +84,17 @@ abstract class DBModel extends Model
     {
         return Application::$app->database->pdo->prepare($sql);
     }
+    public function up()
+    {
+        $db = \App\lscore\Application::$app->database;
+        $table = $this->table;
+        $array  = $this->stockable;
+        $db->table($table,$array);
+    }
+    public function down()
+    {
+        $db = \App\lscore\Application::$app->database;
+        $table = $this->table;
+        $db->pdo->exec("DROP TABLE $table;");
+    }
 }

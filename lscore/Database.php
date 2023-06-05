@@ -31,15 +31,14 @@ class Database
             $appliedMigrations = [];
             $this->log("All migrations are deleted");
         }
-        $files = scandir(Application::$ROUTE_DIR.'/migrations');
+        $files = scandir(Application::$ROUTE_DIR.'/Models');
         $toApllyMigrations = array_diff($files, $appliedMigrations);
         foreach ($toApllyMigrations as $migration)
         {
             if($migration === "." || $migration === ".."){
                 continue;
             }
-            require_once Application::$ROUTE_DIR.'/migrations/'.$migration;
-            $classname = pathinfo($migration, PATHINFO_FILENAME);
+            $classname = "\App\\Models\\".pathinfo($migration, PATHINFO_FILENAME);
             $instance = new $classname();
             if(in_array($migration, $oldMigrations)){
                 $this->log("Deleting migration $migration");

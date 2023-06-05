@@ -9,7 +9,7 @@ abstract class Model
 
     public function isFillable($key)
     {
-        return in_array($key, $this->stockable);
+        return array_key_exists($key, $this->stockable);
     }
 
     protected function stockableFromArray($attributes)
