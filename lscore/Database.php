@@ -23,13 +23,14 @@ class Database
     public function applyMigrations()
     {
         $this->createMigrationsTable();
-        trigger_error(json_encode(count($this->getAppliedMigrations())));
-        if(count($this->getAppliedMigrations()) > 0){
+        $appliedMigrations = $this->getAppliedMigrations();
+        $oldMigrations = [];
+        if(count($appliedMigrations) > 0){
+            $oldMigrations = $appliedMigrations;
             $this->deleteMigrations();
+            $appliedMigrations = [];
             $this->log("All migrations are deleted");
         }
-        $appliedMigrations = $this->getAppliedMigrations();
-        $newMigrations = [];
         $files = scandir(Application::$ROUTE_DIR.'/migrations');
         $toApllyMigrations = array_diff($files, $appliedMigrations);
         foreach ($toApllyMigrations as $migration)
@@ -40,7 +41,7 @@ class Database
             require_once Application::$ROUTE_DIR.'/migrations/'.$migration;
             $classname = pathinfo($migration, PATHINFO_FILENAME);
             $instance = new $classname();
-            if(isset($appliedMigrations[$migration])){
+            if(in_array($migration, $oldMigrations)){
                 $this->log("Deleting migration $migration");
                 $instance->down();
                 $this->log("Deleted migration $migration");
@@ -50,11 +51,11 @@ class Database
             $instance->up();
             $this->log("Applied migration $migration");
 
-            $newMigrations[] = $migration;
+            $appliedMigrations[] = $migration;
         }
 
-        if(!empty($newMigrations)){
-            $this->saveMigrations($newMigrations);
+        if(!empty($appliedMigrations)){
+            $this->saveMigrations($appliedMigrations);
         }else{
             $this->log("All migrations are applied");
         }
@@ -94,17 +95,25 @@ class Database
     {
         echo "[" . date("Y-m-d H:i:s") . "] - " . $message.PHP_EOL;
     }
-    public function testCreateTable(string $name,array $array)
+    /**
+     * @param string $name
+     * name of table
+     * @param array $array
+     * value of column
+     * example : ["id" => ["INT","AI", "PRIMARY"]]
+    */
+    public function table(string $name,array $array)
     {
         $tempArray = [];
         $columnName = [];
         $nullable = false;
         foreach ($array as $column => $options){
             array_push($columnName, $column);
+            $tempArray[$column] = [];
             foreach ($options as $key => $data){
                 if(strtoupper($key) === "DEFAULT"){
                     if(strtoupper($data) === "CURRENT_TIMESTAMP"){
-                         array_push($tempArray[$column],$data);
+                        array_push($tempArray[$column], strtoupper($key." ".$data));
                     }else{
                         array_push($tempArray[$column],"'" .str_replace("'","\'",str_replace('"','\"',$data))."'");
                     }
@@ -117,7 +126,7 @@ class Database
                     }elseif($data === "AI"){
                         array_push($tempArray[$column],"AUTO_INCREMENT");
                     }elseif($data === "ID"){
-                       array_push($tempArray[$column],"INT PRIMARY KEY");
+                        array_push($tempArray[$column],"INT PRIMARY KEY");
                     }elseif($data === "NULL"){
                         $nullable = true;
                     }else{
@@ -127,13 +136,21 @@ class Database
 
             }
         }
-        trigger_error(json_encode($tempArray));
-        array_push($tempArray,($nullable === false) ? ' NOT NULL,' : ' NULL,');
-        $separation = implode(' ', $tempArray);
-        trigger_error(json_encode($separation));
-        $sql = "CREATE TABLE $name (
-                        ".implode(" ".$separation,$columnName)."
+        $separation = [];
+
+
+
+
+        foreach ($columnName as $item){
+            if(!in_array("DEFAULT",$tempArray[$item])){
+                //not default
+                array_push($tempArray[$item], ($nullable === false) ? ' NOT NULL' : ' NULL');
+            }
+            array_push($separation,$item." ".implode(' ', $tempArray[$item]));
+        }
+        $sql = "CREATE TABLE IF NOT EXISTS $name (
+                        ".implode(",",$separation)."
                    ) ENGINE=INNODB;";
-        trigger_error($sql);
+        $this->pdo->exec($sql);
     }
 }

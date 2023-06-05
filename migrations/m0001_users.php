@@ -5,15 +5,7 @@ class m0001_users
     public function up()
     {
         $db = \App\lscore\Application::$app->database;
-//       $sql = "CREATE TABLE users (
-//            id INT AUTO_INCREMENT PRIMARY KEY,
-//            first_name VARCHAR(255) NOT NULL,
-//            last_name VARCHAR(255) NOT NULL,
-//            email VARCHAR(255) NOT NULL,
-//            password TEXT NOT NULL,
-//            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-//       ) ENGINE=INNODB;";
-        $db->testCreateTable("users",[
+        $db->table("users",[
             "id" => ["int","ai", "primary"],
             "first_name" => ["varchar" => 255],
             "last_name" => ["varchar" => 255],
@@ -21,12 +13,10 @@ class m0001_users
             "password" => ["text"],
             "created_at" => ["timestamp", "default" => "current_timestamp"]
         ]);
-//       $db->pdo->exec($sql);
     }
     public function down()
     {
         $db = \App\lscore\Application::$app->database;
-        $sql = "DROP TABLE users;";
-        $db->pdo->exec($sql);
+        $db->pdo->exec("DROP TABLE users;");
     }
 }
