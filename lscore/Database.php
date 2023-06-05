@@ -22,6 +22,10 @@ class Database
 
     public function applyMigrations()
     {
+
+
+
+
         $this->createMigrationsTable();
         $appliedMigrations = $this->getAppliedMigrations();
         $oldMigrations = [];
@@ -40,11 +44,11 @@ class Database
             }
             $classname = "\App\\Models\\".pathinfo($migration, PATHINFO_FILENAME);
             $instance = new $classname();
-            if(in_array($migration, $oldMigrations)){
-                $this->log("Deleting migration $migration");
-                $instance->down();
-                $this->log("Deleted migration $migration");
-            }
+//            if(in_array($migration, $oldMigrations)){
+//                $this->log("Deleting migration $migration");
+//                $instance->down();
+//                $this->log("Deleted migration $migration");
+//            }
 
             $this->log("Applying migration $migration");
             $instance->up();
@@ -94,6 +98,8 @@ class Database
     {
         echo "[" . date("Y-m-d H:i:s") . "] - " . $message.PHP_EOL;
     }
+
+
     /**
      * @param string $name
      * name of table
@@ -147,9 +153,39 @@ class Database
             }
             array_push($separation,$item." ".implode(' ', $tempArray[$item]));
         }
-        $sql = "CREATE TABLE IF NOT EXISTS $name (
+        $statement = $this->pdo->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'Users' AND TABLE_SCHEMA = 'mvcPHP';");
+        $statement->execute();
+        $statement = $statement->fetchAll(\PDO::FETCH_COLUMN);
+        if(count($statement) > 0){
+            // get what to add
+            $newValue =  array_diff($columnName,$statement);
+
+//            // get what to remove
+            $delCol =  array_diff($statement,$columnName);
+
+            if(count($newValue) > 0){
+                foreach ($separation as $modelValue){
+                    foreach ($newValue as $filterData){
+                        if(str_contains($modelValue, $filterData)){
+                            $sql = "ALTER TABLE $name ADD $modelValue;";
+                            trigger_error($sql);
+                            $this->pdo->exec($sql);
+                        }
+                    }
+                }
+            }
+            if(count($delCol) > 0){
+                foreach ($delCol as $col)
+                {
+                    $sql = "ALTER TABLE $name DROP COLUMN $col;";
+                    $this->pdo->exec($sql);
+                }
+            }
+        }else{
+            $sql = "CREATE TABLE IF NOT EXISTS $name (
                         ".implode(",",$separation)."
                    ) ENGINE=INNODB;";
-        $this->pdo->exec($sql);
+            $this->pdo->exec($sql);
+        }
     }
 }
