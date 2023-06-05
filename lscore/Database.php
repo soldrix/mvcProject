@@ -168,7 +168,6 @@ class Database
                     foreach ($newValue as $filterData){
                         if(str_contains($modelValue, $filterData)){
                             $sql = "ALTER TABLE $name ADD $modelValue;";
-                            trigger_error($sql);
                             $this->pdo->exec($sql);
                         }
                     }
