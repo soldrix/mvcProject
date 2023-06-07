@@ -27,10 +27,9 @@ class AuthControllers extends Controller
     }
     public function sendFormLogin(Request $request)
     {
-        $validation = new Validation();
         //pour valider les données par rapport aux règles,
         // Nous pouvons changer le message d'erreur par défaut pour une règle ou pour une valeur d'une règle, exemple :  email.required => "champs vide"
-        $validation->validate($request->getBody(),[
+        $validation = Validation::validate($request->only(["password","email"]),[
             "password" => "required",
             "email" => ["required", "email"]
         ]);
@@ -51,18 +50,16 @@ class AuthControllers extends Controller
     }
     public function register(Request $request)
     {
-        $validation = new Validation();
-        $validation->validate($request->getBody(),[
+        $validation = Validation::validate($request->getBody(),[
             "password" => "required",
             "email" => ["required", "email"],
             "first_name" => "required",
             "last_name" => "required"
         ]);
         if($validation->getErrors()) return $this->render('register',['errors' => $validation->getErrors(), 'data' => $request->getBody()]);
-        $user = new Users();
         $datas = $request->getBody();
         $datas->password = password_hash($datas->password, PASSWORD_DEFAULT);
-        $user->Create($datas);
+        USers::Create($datas);
         return $this->render('register', ["message" => "utilisateur créer avec succès !"]);
     }
     public function forgot_password(Request $request)
@@ -84,38 +81,34 @@ class AuthControllers extends Controller
     }
 
     public function getUsers(){
-        $users = new Users();
-      return $users->get();
+      return Users::get();
     }
     public function deleteUser(Request $request)
     {
-        $users = new Users();
-        $users->delete($request->getBody()->id);
+        Users::delete($request->id);
     }
 
     public function findUser(){
-        $users = new Users();
-        return $users->find([
-            "first_name" => "jean"
+        return Users::find([
+            "first_name" => "toto"
         ]);
     }
     public function userUpdate()
     {
-        $users = new Users();
-        $users->update([
-            "first_name" => "jean",
+        Users::update([
+            "first_name" => "jeanMark",
             "last_name" => "aze"
         ],
         [
-            "id" => 1
+            "id" => 5
         ]);
     }
     public function testJoin()
     {
         $users = new Users();
         return $users->join("left", "voitures", "id", "id_users", "=", [
-            "users.first_name",
-            "voitures.*"
+            "users.first_name as toto",
+            "voitures.* as voiture"
         ]);
     }
     public function logout():void

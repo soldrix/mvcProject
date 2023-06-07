@@ -4,7 +4,7 @@ use App\lscore\DBModel;
 
 class Users extends DBModel
 {
-    protected $stockable  = [
+    protected  $stockable  = [
         "id" => ["int","ai", "primary"],
         "first_name" => ["varchar" => 255],
         "last_name" => ["varchar" => 255],
@@ -12,5 +12,5 @@ class Users extends DBModel
         "password" => ["text"],
         "created_at" => ["timestamp", "default" => "current_timestamp"]
     ];
-    public string $table = "users";
+    protected  string $table = "users";
 }

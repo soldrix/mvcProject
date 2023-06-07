@@ -46,21 +46,27 @@ class Request
         return $this->method() === 'post';
     }
 
+    public function only(string|array $data): \stdClass
+    {
+        $body  = new \stdClass();
+        $data = (gettype($data) === "string") ? [$data] : $data;
+        foreach ($data as $key){
+                $body->$key = $this->getBody()->$key;
+        }
+        return $body;
+
+    }
+
     public function getBody()
     {
-        $body = [];
-
-        if ($this->method() === "get") {
-            foreach ($_GET as $key => $value) {
-                $body[$key] =$value;
-            }
-        }
-
-        if ($this->method() === "post") {
-            foreach ($_POST as $key => $value) {
-                $body[$key] = $value;
-            }
-        }
-        return json_decode(json_encode($body));
+        $body = new \stdClass();
+       foreach (($this->method() === "post") ? $_POST : $_GET as $key => $value) {
+            $body->$key = $value;
+       }
+        return $body;
+    }
+    public function __get($key)
+    {
+        return $this->getBody()->$key;
     }
 }

@@ -7,11 +7,15 @@ use PDO;
 class Database
 {
     public \PDO $pdo;
+    public static string $db_name;
+
+
 
     public function __construct(array $config)
     {
         $name = $config['DB_NAME'];
         $host = $config['DB_HOST'];
+        self::$db_name = $name;
         $port = $config['DB_PORT'];
         $user = $config['DB_USER'];
         $password = $config['DB_PASSWORD'];

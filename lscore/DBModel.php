@@ -4,78 +4,106 @@ namespace App\lscore;
 
 abstract class DBModel extends Model
 {
-    public string $table;
+    protected  string $table;
 
     /**
      * Add sign to array/object value
     */
-    private function addSign($datas)
+    private function addSign(array $datas): array
     {
         foreach ($datas as $key => $item){
             $datas[$key] = (count(explode(" ", $key)) < 2) ? "$key='$item'" : "$key'$item'";
         }
         return $datas;
     }
-    public function Create($datas)
+    public static function Create($datas):void
     {
-        if($this->stock($datas)){
-            $table = $this->table;
-            $attributes = $this->stockable;
-            $params = array_map(fn($attr) => ":$attr", $attributes);
-            $statement = self::prepare("INSERT INTO $table (".implode(",",$attributes).")
-            VALUES (".implode(",",$params).");");
-            foreach ($attributes as $attribute){
-                $statement->bindParam(":$attribute", $this->attributes[$attribute]);
-            }
-            $statement->execute();
+       $model = new static();
+       $model->attributes = [];
+        $model->stock($datas);
+        $table = $model->table;
+        $attributes = $model->attributes;
+        $params = array_map(fn($attr) => ":$attr", array_keys($attributes));
+        $statement = self::prepare("INSERT INTO $table (".implode(",",array_keys($attributes)).")
+    VALUES (".implode(",",$params).");");
+        foreach ($attributes as $key => $attribute){
+            $statement->bindParam(":$key", $model->attributes[$key]);
         }
+        $statement->execute();
     }
-    public function get(array $params = ["*"], $DISTINCT = false)
+    public static function get(array $params = ["*"], $DISTINCT = false): bool|array
     {
-        $table = $this->table;
+        $table = (new static())->table;
         $DISTINCT = ($DISTINCT === false) ? "": "DISTINCT ";
         $statement = self::prepare("SELECT $DISTINCT" . implode(',',$params) . " FROM $table;");
         $statement->execute();
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
     }
-    public function find(array $search,array $params = ["*"])
+    public static function find(array $search,array $params = ["*"])
     {
-        $table = $this->table;
-        $search = $this->addSign($search);
+        $model = new static();
+        $table = $model->table;
+        $search = $model->addSign($search);
         $statement = self::prepare("SELECT " . implode(',',$params) . " FROM $table WHERE "
             . implode(" AND ", $search) . ";");
         $statement->execute();
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
     }
-    public function delete($id)
+    public static function delete($id)
     {
-        $table = $this->table;
+        $table = (new static())->table;
         $statement = self::prepare("DELETE FROM $table WHERE id = $id");
         $statement->execute();
     }
-    public function update($datas,$where)
+    public static function update($datas,$where)
     {
-        if($this->stock($datas)){
-            $table = $this->table;
-            $user = $this->find($where,array_keys($this->attributes));
-            $where = $this->addSign($where);
-            $diff_value = array_diff_assoc($this->attributes,$user[0]);
+        $model = new static();
+        $model->stock($datas);
+        $table = $model->table;
+        $user = $model->find($where,array_keys($model->attributes));
+        $where = $model->addSign($where);
+        if(count($user) > 0){
+            $diff_value = array_diff_assoc($model->attributes,$user[0]);
             if(count($diff_value) > 0){
-                $values = $this->addSign($diff_value);
-                $statement = self::prepare("UPDATE $table set ". implode(" AND ", $values) . " WHERE "
+                $values = $model->addSign($diff_value);
+                $statement = self::prepare("UPDATE $table set ".  implode(",", $values) . " WHERE "
                     . implode(" AND ", $where) . ";");
                 $statement->execute();
             }
-
+        }else{
+            trigger_error("Row not found !");
         }
 
     }
-    public function join($type, $joinTable, $currentTableKey , $joinTableKey, $sign,array $get = ["*"], array $where = [])
+    public static function join($type, $joinTable, $currentTableKey , $joinTableKey, $sign,array $get = ["*"], array $where = [])
     {
-        $table = $this->table;
-        $where = (count($where) > 0) ? " WHERE ". implode(" AND ", $this->addSign($where)) . ";" : ";";
+        //$model same as $this if function was not static
+        $model  = new static();
+        $table = $model->table;
+        $where = (count($where) > 0) ? " WHERE ". implode(" AND ", $model->addSign($where)) . ";" : ";";
         $type = strtoupper($type);
         $condition = ($type !== "CROSS" && $type!== "NATURAL") ? " ON $table.$currentTableKey $sign $joinTable.$joinTableKey" : "";
+        foreach ($get as $key =>  $data){
+            //if get contains alias
+            if(str_contains($data," as ")){
+                //explode search in get
+                $tempArray = explode(" as ", $data);
+                $alias = $tempArray[1] . '_';
+                //first part of search from get
+                $columnName = explode(".",$tempArray[0]);
+                $tableName = $columnName[0];
+                if($columnName[1] === "*"){
+                    unset($get[$key]);
+                    $statement = self::prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'$tableName' AND TABLE_SCHEMA = '".Database::$db_name."';");
+                    $statement->execute();
+                    $statement = $statement->fetchAll(\PDO::FETCH_COLUMN);
+                    //For each column in table,add alias
+                    foreach ($statement as $column){
+                        array_push($get,   $tableName.'.'.$column. ' as '.$alias.$column);
+                    }
+                }
+            }
+        }
         $statement =self::prepare("SELECT ". implode(',', $get) ." FROM $table $type JOIN $joinTable".$condition.$where);
         $statement->execute();
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
@@ -87,9 +115,7 @@ abstract class DBModel extends Model
     public function up()
     {
         $db = \App\lscore\Application::$app->database;
-        $table = $this->table;
-        $array  = $this->stockable;
-        $db->table($table,$array);
+        $db->table($this->table,$this->stockable);
     }
     public function down()
     {
