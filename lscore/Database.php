@@ -26,15 +26,9 @@ class Database
 
     public function applyMigrations()
     {
-
-
-
-
         $this->createMigrationsTable();
         $appliedMigrations = $this->getAppliedMigrations();
-        $oldMigrations = [];
         if(count($appliedMigrations) > 0){
-            $oldMigrations = $appliedMigrations;
             $this->deleteMigrations();
             $appliedMigrations = [];
             $this->log("All migrations are deleted");
@@ -48,12 +42,6 @@ class Database
             }
             $classname = "\App\\Models\\".pathinfo($migration, PATHINFO_FILENAME);
             $instance = new $classname();
-//            if(in_array($migration, $oldMigrations)){
-//                $this->log("Deleting migration $migration");
-//                $instance->down();
-//                $this->log("Deleted migration $migration");
-//            }
-
             $this->log("Applying migration $migration");
             $instance->up();
             $this->log("Applied migration $migration");
@@ -69,7 +57,7 @@ class Database
 
     }
 
-    public function createMigrationsTable()
+    public function createMigrationsTable(): void
     {
         $this->pdo->exec("CREATE TABLE IF NOT EXISTS migrations (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -78,17 +66,18 @@ class Database
             ) ENGINE=INNODB;");
     }
 
-    public function getAppliedMigrations()
+    public function getAppliedMigrations(): bool|array
     {
        $statement =  $this->pdo->prepare("SELECT migration FROM migrations");
        $statement->execute();
        return $statement->fetchAll(\PDO::FETCH_COLUMN);
     }
-    public function deleteMigrations(){
+    public function deleteMigrations(): void
+    {
         $statement = $this->pdo->prepare("DELETE FROM migrations;");
         $statement->execute();
     }
-    public function saveMigrations(array $migrations)
+    public function saveMigrations(array $migrations): void
     {
 
         $str = implode(",", array_map(fn($m) => "('$m')", $migrations));
@@ -98,7 +87,7 @@ class Database
         ");
         $statement->execute();
     }
-    protected function log($message)
+    protected function log($message): void
     {
         echo "[" . date("Y-m-d H:i:s") . "] - " . $message.PHP_EOL;
     }
@@ -111,61 +100,92 @@ class Database
      * value of column
      * example : ["id" => ["INT","AI", "PRIMARY"]]
     */
-    public function table(string $name,array $array)
+    public function table(string $name,array $array): void
     {
         $tempArray = [];
         $columnName = [];
-        $nullable = false;
+        $separation = [];
         foreach ($array as $column => $options){
-            array_push($columnName, $column);
+            $nullable = false;
+            $columnName[] = $column;
             $tempArray[$column] = [];
             foreach ($options as $key => $data){
                 if(strtoupper($key) === "DEFAULT"){
                     if(strtoupper($data) === "CURRENT_TIMESTAMP"){
-                        array_push($tempArray[$column], strtoupper($key." ".$data));
+                        $tempArray[$column][] = strtoupper($key . " " . $data);
                     }else{
-                        array_push($tempArray[$column],"'" .str_replace("'","\'",str_replace('"','\"',$data))."'");
+                        $tempArray[$column][] = strtoupper($key) . ' ' . "'" .$data."'" ;
                     }
                 }else{
                     $data = strtoupper($data);
                     if (strtoupper($key) === "VARCHAR" || strtoupper($key) === "CHAR"){
-                        array_push($tempArray[$column],$key."(".$data.")");
+                        $tempArray[$column][] = $key . "(" . $data . ")";
                     }elseif($data === "PRIMARY"){
-                        array_push($tempArray[$column],"PRIMARY KEY");
+                        $tempArray[$column][] = "PRIMARY KEY";
                     }elseif($data === "AI"){
-                        array_push($tempArray[$column],"AUTO_INCREMENT");
+                        $tempArray[$column][] = "AUTO_INCREMENT";
                     }elseif($data === "ID"){
-                        array_push($tempArray[$column],"INT PRIMARY KEY");
+                        $tempArray[$column][] = "INT";
+                        $tempArray[$column][] = "PRIMARY KEY";
                     }elseif($data === "NULL"){
                         $nullable = true;
                     }else{
-                        array_push($tempArray[$column], $data);
+                        $tempArray[$column][] = $data;
                     }
                 }
 
             }
-        }
-        $separation = [];
-
-
-
-
-        foreach ($columnName as $item){
-            if(!in_array("DEFAULT",$tempArray[$item])){
-                //not default
-                array_push($tempArray[$item], ($nullable === false) ? ' NOT NULL' : ' NULL');
+            $default = false;
+            foreach ($tempArray[$column] as $value){
+                if(str_contains($value, "DEFAULT")){
+                    $default = true;
+                    break;
+                }
             }
-            array_push($separation,$item." ".implode(' ', $tempArray[$item]));
+            if(!$default){
+                //not default
+                $tempArray[$column][] = ($nullable === false) ? ' NOT NULL' : ' NULL';
+            }
+            $separation[] = $column . " " . implode(' ', $tempArray[$column]);
         }
-        $statement = $this->pdo->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'Users' AND TABLE_SCHEMA = 'mvcPHP';");
+//EXTRA,COLUMN_KEY
+        $statement = $this->pdo->prepare("SELECT COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'Users' AND TABLE_SCHEMA = 'mvcPHP';");
         $statement->execute();
-        $statement = $statement->fetchAll(\PDO::FETCH_COLUMN);
-        if(count($statement) > 0){
-            // get what to add
-            $newValue =  array_diff($columnName,$statement);
+        $statement = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        $arrayStatement = [];
+        if (count($statement) > 0){
+            foreach ($statement as $data){
+                foreach($data as $key => $column){
+                    if($key === "COLUMN_NAME"){
+                        $arrayType = [];
+                        if (str_contains(strtoupper($data["COLUMN_TYPE"]), "INT")){
+                            $intType = explode('(',$data["COLUMN_TYPE"]);
+                            $arrayType[] = strtoupper($intType[0]);
+                        }else{
+                            $arrayType[] = strtoupper($data["COLUMN_TYPE"]);
+                        }
+                        $arrayType[] = (strtoupper($data["IS_NULLABLE"]) === "YES") ? " NULL" : " NOT NULL";
+                        $diffType = array_diff($arrayType,array_map('strtoupper', $tempArray[$column]));
 
-//            // get what to remove
-            $delCol =  array_diff($statement,$columnName);
+                        if (isset($data["COLUMN_DEFAULT"])){
+                            $defaultVal[] = "DEFAULT ".$data["COLUMN_DEFAULT"];
+                            $diffDefault = array_diff($defaultVal,array_map('strtoupper', $tempArray[$column]));
+                        }
+                        if(count($diffType) > 0 || isset($diffDefault)){
+                            $this->alterTable($name, "DROP COLUMN" ,$column);
+                        }else{
+                            $arrayStatement[] = $column;
+                        }
+
+                    }
+                }
+            }
+        }
+        if(count($arrayStatement) > 0){
+            // get what to add
+            $newValue =  array_diff($columnName,$arrayStatement);
+            // get what to remove
+            $delCol =  array_diff($arrayStatement,$columnName);
 
             if(count($newValue) > 0){
                 foreach ($separation as $modelValue){
@@ -190,5 +210,9 @@ class Database
                    ) ENGINE=INNODB;";
             $this->pdo->exec($sql);
         }
+    }
+    private function alterTable(string $table, string $type, string $value){
+        $sql = "ALTER TABLE $table $type $value;";
+        $this->pdo->exec($sql);
     }
 }

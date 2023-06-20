@@ -7,10 +7,11 @@ abstract class Model
     protected  $stockable = [];
     protected  $attributes = [];
 
-    private function isFillable($key)
+    public function isFillable($key)
     {
-        return array_key_exists($key, $this->stockable);
+        return in_array($key, $this->stockable);
     }
+
 
     private function stockableFromArray($attributes)
     {
@@ -39,7 +40,7 @@ abstract class Model
         $fillable = $this->stockableFromArray($attributes);
 
         foreach ($fillable as $key => $value) {
-            if ($this->isFillable($key)) {
+            if (array_key_exists($key, $this->stockable)) {
                 $this->attributes[$key] = $value;
             }
         }

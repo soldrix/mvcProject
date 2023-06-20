@@ -26,4 +26,9 @@ class Controller
     public function getAuth(){
         return !Application::$app->isGuest();
     }
+    public function response(int $code, $data)
+    {
+        Application::$app->response->setStatusCode($code);
+        return $data;
+    }
 }

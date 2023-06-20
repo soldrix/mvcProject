@@ -64,7 +64,8 @@ class Validation
         //test par type
         $rules = [
             "required" => ($data === null || $data === ''),
-            "email" => (preg_match($email, $data, $matches, PREG_OFFSET_CAPTURE, 0) === 0)
+            "email" => (preg_match($email, $data, $matches, PREG_OFFSET_CAPTURE, 0) === 0),
+            "model"
         ];
         //pour changer le message d'erreur par défaut par le message personnalisé.
         if(count($customMessage) > 0){
