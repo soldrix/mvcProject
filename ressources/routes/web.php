@@ -1,6 +1,6 @@
 <?php
 use App\controllers\SiteController;
-
+$app->router->get('/', [SiteController::class, 'redirectLogin']);
 $app->router->get('/login', [\App\controllers\AuthControllers::class, 'login']);
 $app->router->get('/forgot-password', [\App\controllers\AuthControllers::class, 'forgot_password']);
 $app->router->post('/forgot-password', [\App\controllers\AuthControllers::class, 'forgot_password']);

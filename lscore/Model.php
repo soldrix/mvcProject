@@ -4,24 +4,34 @@ namespace App\lscore;
 
 abstract class Model
 {
-    protected $stockable = [];
-    protected $attributes = [];
+    protected  $stockable = [];
+    protected  $attributes = [];
 
     public function isFillable($key)
     {
         return in_array($key, $this->stockable);
     }
 
-    protected function stockableFromArray($attributes)
+
+    private function stockableFromArray($attributes)
     {
         if (count($this->stockable) > 0) {
-            return array_intersect_key($attributes, array_flip($this->stockable));
+            $body = [];
+            foreach ($this->stockable as $key => $value){
+                foreach ($attributes as $attrKey => $attribute){
+                    if($key === $attrKey){
+                        $body[$key] =  $attributes[$key];
+                    }
+                }
+            }
+
+          return $body;
         }
 
         return $attributes;
     }
 
-    public function stock($attributes)
+    public function stock($attributes): bool
     {
         if(gettype($attributes) == "object"){
             //pour changer le format
@@ -30,11 +40,8 @@ abstract class Model
         $fillable = $this->stockableFromArray($attributes);
 
         foreach ($fillable as $key => $value) {
-            if ($this->isFillable($key)) {
+            if (array_key_exists($key, $this->stockable)) {
                 $this->attributes[$key] = $value;
-            }else {
-                error_log("An item is not stockable");
-                return false;
             }
         }
         return true;

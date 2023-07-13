@@ -10,6 +10,10 @@ class SiteController extends Controller
     {
         $this->redirect('/home');
     }
+    public function redirectLogin():void
+    {
+        $this->redirect('/login');
+    }
     public  function index()
     {
         return $this->render('home');
@@ -21,8 +25,7 @@ class SiteController extends Controller
 
     public  function HandleContact(Request $request)
     {
-        $body = $request->getBody();
-        return $body;
+        return $request->getBody();
     }
     public function profil()
     {

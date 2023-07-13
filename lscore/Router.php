@@ -66,7 +66,9 @@ class Router
 
     /**
      *Cette fonction permet de d'utiliser et verifier les routes par rapport à la requête en cours.
-     * */
+     *
+     * @throws NotFoundException
+     */
     public function resolve()
     {
         //Chemin de la requête
@@ -75,10 +77,12 @@ class Router
         $method = $this->request->method();
         //Route avec connexion
         $callback = $this->routes[$method][$path] ?? null;
+        if($callback === null){
+            throw new NotFoundException();
+        }
 //        //Pour rediriger a la page par défaut si une connexion existe.
         if($method === "post" && $callback === null && !str_contains($this->request->getPath(),"api")){
             $callback = $this->routes['get'][$path];
-            error_log("Route not found.");
         }
         //Pour retourner une page
         if(is_string($callback)){
@@ -91,9 +95,6 @@ class Router
             $callback[0] = $controller;
         }
         //Pour retourner une page not found si aucune route existe.
-        if($callback === null ){
-            throw new NotFoundException();
-        }
         //Pour utiliser la fonction du controller de la route
         return call_user_func($callback, $this->request);
     }
