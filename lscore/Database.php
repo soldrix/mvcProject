@@ -149,7 +149,8 @@ class Database
             $separation[] = $column . " " . implode(' ', $tempArray[$column]);
         }
 //EXTRA,COLUMN_KEY
-        $statement = $this->pdo->prepare("SELECT COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'Users' AND TABLE_SCHEMA = 'mvcPHP';");
+        $dbname = Database::$db_name;
+        $statement = $this->pdo->prepare("SELECT COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'$name' AND TABLE_SCHEMA = '$dbname';");
         $statement->execute();
         $statement = $statement->fetchAll(\PDO::FETCH_ASSOC);
         $arrayStatement = [];
