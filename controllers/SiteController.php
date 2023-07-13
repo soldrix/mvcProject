@@ -10,6 +10,10 @@ class SiteController extends Controller
     {
         $this->redirect('/home');
     }
+    public function redirectLogin():void
+    {
+        $this->redirect('/login');
+    }
     public  function index()
     {
         return $this->render('home');

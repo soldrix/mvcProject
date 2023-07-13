@@ -4,6 +4,6 @@ namespace App\lscore\exception;
 
 class NotFoundException extends \Exception
 {
-    protected $message = "Page not found.";
+    protected $message = "Route not found.";
     protected $code = 404;
 }

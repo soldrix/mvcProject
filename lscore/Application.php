@@ -46,6 +46,7 @@ class Application
                 }else{
                     $value = $this->router->resolve();
                     if(gettype($value) !== 'string'){
+                        $this->response->setStatusCode(403);
                         $value = [
                             "error" => "Invalid or missing CSRF token"
                         ];
@@ -67,16 +68,17 @@ class Application
             }
             echo $value;
         }catch (\Exception $e){
-            if(!str_contains($this->request->getPath(),"api")){
-                $view =  ($this->isGuest() && $this->request->method() !== "post") ? "login" : "_404";
-                $this->response->setStatusCode(($this->isGuest()) ? 308 : $e->getCode());
+            $this->response->setStatusCode($e->getCode());
+            if(Application::$app->request->getHeaders("Content-Type") !== null){
+                if(Application::$app->request->getHeaders("Content-Type") === "application/json"){
+                    echo $e->getMessage();
+                }
+            }else{
+                $view =  "_404";
                 echo $this->router->renderView($view,[
                     "exceptions" => $e
                 ]);
-            }else{
-                echo $e->getMessage();
             }
-
         }
     }
 

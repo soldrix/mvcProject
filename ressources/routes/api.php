@@ -2,8 +2,6 @@
 
 use App\controllers\SiteController;
 
-$app->router->setPath("/".basename(__FILE__, '.php'));
-
 $app->router->get('/jean', [SiteController::class, 'testApi']);
 $app->router->get('/users', [\App\controllers\AuthControllers::class, 'getUsers']);
 $app->router->post('/usersUpdate', [\App\controllers\AuthControllers::class, 'userUpdate']);

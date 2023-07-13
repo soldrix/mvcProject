@@ -10,6 +10,11 @@ namespace App\lscore;
  * */
 class Request
 {
+    public function getHeaders($headerName)
+    {
+        $headers = apache_request_headers();
+        return $headers[$headerName] ?? null;
+    }
     /**
      * Cette fonction permet de récupérer le chemin de la requête en cours.
      * */
