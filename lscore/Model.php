@@ -6,6 +6,7 @@ abstract class Model
 {
     protected  $stockable = [];
     protected  $attributes = [];
+    protected $foreignKey = [];
 
     public function isFillable($key)
     {

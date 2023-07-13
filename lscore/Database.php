@@ -54,7 +54,19 @@ class Database
         }else{
             $this->log("All migrations are applied");
         }
-
+        foreach ($toApllyMigrations as $migration)
+        {
+            if($migration === "." || $migration === ".."){
+                continue;
+            }
+            $classname = "\App\\Models\\".pathinfo($migration, PATHINFO_FILENAME);
+            $instance = new $classname();
+            if($instance->verifyForeignKeyArray()){
+                $this->log("Applying Foreign Key $migration");
+                $instance->addForeignKey();
+                $this->log("Applied Foreign Key $migration");
+            }
+        }
     }
 
     public function createMigrationsTable(): void

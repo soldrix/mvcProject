@@ -123,4 +123,43 @@ abstract class DBModel extends Model
         $table = $this->table;
         $db->pdo->exec("DROP TABLE $table;");
     }
+    public function verifyForeignKeyArray()
+    {
+        if(count($this->foreignKey) > 0){
+            return true;
+        }
+        return false;
+    }
+    public function addForeignKey()
+    {
+        $db = \App\lscore\Application::$app->database;
+        $table = $this->table;
+        foreach($this->foreignKey as $columnName => $datas){
+            foreach ($datas as $key => $value){
+                if(strtoupper($key) === "REFERENCES"){
+                    $foreignTable = $value;
+                }elseif (strtoupper($key) === "ON"){
+                    $foreignId = $value;
+                }elseif (strtoupper($key) === "DELETE"){
+                    $onDelete = strtoupper($value);
+                }elseif (strtoupper($key) === "UPDATE"){
+                    $onUpdate = strtoupper($value);
+                }
+            }
+            if (isset($foreignTable,$foreignId,$onDelete,$onUpdate)){
+
+                $keyName = $table."_".$columnName."_foreign";
+                $dbName = Database::$db_name;
+                $statement = $db->pdo->prepare("SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS C WHERE C.CONSTRAINT_NAME = '$keyName' AND C.TABLE_NAME = '$table' AND C.TABLE_SCHEMA = '$dbName';");
+                $statement->execute();
+                $statement = $statement->fetchAll();
+                if(count($statement) > 0){
+                    $db->pdo->exec("ALTER TABLE ".$dbName.'.'.$table." DROP FOREIGN KEY $keyName");
+                    //for other than mysql
+//                    $db->pdo->exec("ALTER TABLE ".$dbName.'.'.$table." DROP CONSTRAINT $keyName");
+                }
+                $db->pdo->exec("ALTER TABLE $table ADD CONSTRAINT $keyName FOREIGN KEY ($columnName) REFERENCES $foreignTable($foreignId) ON DELETE $onDelete ON UPDATE $onUpdate;");
+            }
+        }
+    }
 }
