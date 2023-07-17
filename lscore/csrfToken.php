@@ -13,7 +13,6 @@ class csrfToken
         for ($i = 0; $i < $length; $i++) {
             $randomString .= $characters[random_int(0, $charactersLength - 1)];
         }
-        Application::$app->session->set("token", $randomString);
         return $randomString;
     }
     /**
@@ -21,10 +20,10 @@ class csrfToken
      */
     public function getToken()
     {
-       return Application::$app->session->get('token');
+       return Application::$app->session->get('CSRF_token');
     }
     public function resetToken():void{
-        Application::$app->session->remove('token');
+        Application::$app->session->remove('CSRF_token');
     }
     public function loadToken(){
         $token = $this->getToken();

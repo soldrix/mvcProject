@@ -178,11 +178,11 @@ class Database
                             $arrayType[] = strtoupper($data["COLUMN_TYPE"]);
                         }
                         $arrayType[] = (strtoupper($data["IS_NULLABLE"]) === "YES") ? " NULL" : " NOT NULL";
-                        $diffType = array_diff($arrayType,array_map('strtoupper', $tempArray[$column]));
+                        $diffType = array_diff($arrayType,array_map('strtoupper', $tempArray[$column] ?? []));
 
                         if (isset($data["COLUMN_DEFAULT"])){
                             $defaultVal[] = "DEFAULT ".$data["COLUMN_DEFAULT"];
-                            $diffDefault = array_diff($defaultVal,array_map('strtoupper', $tempArray[$column]));
+                            $diffDefault = array_diff($defaultVal,array_map('strtoupper', $tempArray[$column] ?? []));
                         }
                         if(count($diffType) > 0 || isset($diffDefault)){
                             $this->alterTable($name, "DROP COLUMN" ,$column);

@@ -32,6 +32,9 @@ class Application
         $this->middleware = new middleware();
         $this->csrfToken = new csrfToken();
         $this->database = new Database($config['db']);
+        if ($this->session->get('CSRF_token') === null){
+            $this->session->set('CSRF_token',$this->csrfToken->generateToken(255));
+        }
     }
     public function run()
     {
