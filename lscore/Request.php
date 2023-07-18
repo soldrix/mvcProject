@@ -21,6 +21,7 @@ class Request
     public function getPath()
     {
         $path = $_SERVER['REQUEST_URI'] ?? '/';
+        $path = ($this->getHeaders("Accept") !== "application/json") ?  "/web".$path  : $path;
         $positions = strpos($path, '?');
         if($positions === false){
             return $path;
@@ -65,9 +66,14 @@ class Request
     public function getBody()
     {
         $body = new \stdClass();
-       foreach (($this->method() === "post") ? $_POST : $_GET as $key => $value) {
+        if(isset($_FILES)){
+            foreach ($_FILES as $key => $value){
+                $body->$key = $value;
+            }
+        }
+        foreach (($this->method() === "post") ? $_POST : $_GET as $key => $value) {
             $body->$key = $value;
-       }
+        }
         return $body;
     }
     public function __get($key)

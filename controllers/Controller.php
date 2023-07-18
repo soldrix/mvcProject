@@ -23,8 +23,8 @@ class Controller
     {
         Application::$app->response->redirect($url);
     }
-    public function getAuth(){
-        return !Application::$app->isGuest();
+    public function isAuth(){
+        return Application::$app->isGuest() === false;
     }
     public function response(int $code, $data)
     {

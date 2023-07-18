@@ -16,7 +16,5 @@ class middleware
                 call_user_func(array($toto, $splitText[1]),$callable);
             }
         }
-
     }
-
 }

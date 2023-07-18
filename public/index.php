@@ -16,6 +16,7 @@ $config = [
     ]
 ];
 $app = new Application(dirname(__DIR__),$config);
+$app->router->setPath("/web");
 require_once __DIR__ . '/../ressources/routes/web.php';
 $app->router->setPath("/api");
 require_once __DIR__ . '/../ressources/routes/api.php';
