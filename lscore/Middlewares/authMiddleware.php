@@ -3,6 +3,8 @@
 namespace App\lscore\Middlewares;
 
 use App\lscore\Application;
+use App\lscore\exception\ForbiddenExecption;
+use App\lscore\exception\NotAuthenticatedException;
 use App\lscore\exception\NotFoundException;
 
 class authMiddleware extends middleware
@@ -22,17 +24,17 @@ class authMiddleware extends middleware
     {
         $method = Application::$app->request->method();
         $path = Application::$app->request->getPath();
-        if (Application::$app->request->getHeaders('Accept') === 'application/json'){
-            Header('Content-type: application/json');
-            if(Application::$app->router->routeExist($path,$method.'Auth')){
-                return ["message" => "not Authenticated !"];
-            }
-            return ["message" => "Route not found !"];
-        }
         if (Application::$app->session->get('authStatus') !== null){
             return throw new NotFoundException();
+        }else{
+            if(Application::$app->router->routeExist($path,$method.'Auth')){
+                return throw new NotAuthenticatedException();
+            }
+            if (!str_contains($path,'api')){
+                return "";
+            }
+            return throw new NotFoundException();
         }
-        return "";
     }
     public function __destruct()
     {

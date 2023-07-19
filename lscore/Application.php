@@ -3,6 +3,8 @@
 namespace App\lscore;
 use App\controllers\Controller;
 use App\lscore\exception\NotFoundException;
+use App\lscore\exception\TokenAppException;
+use App\lscore\exception\TokenCSRF_Exception;
 use App\lscore\Middlewares\middleware;
 use App\Models\Users;
 
@@ -49,27 +51,18 @@ class Application
         $requestTokenApp = Application::$app->request->getHeaders('AuthorizationApp');
         try {
             if($requestTokenApp !== $this->tokenApp && str_contains($this->request->getPath(),'api')){
-                $value = [
-                    "error" => "Invalid or missing tokenApp !"
-                ];
+                throw new TokenAppException();
             }elseif(!isset($requestTokenApp)){
                 $CSRF_Request = $_POST["csrf-token"] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? "";
                 $value = $this->router->resolve();
                 if($this->request->method() === "post" && $CSRF_Request  !== $this->csrfToken->getToken() || ($value !== null && gettype($value) !== 'string')){
-                    $this->response->setStatusCode(403);
-                    $value = [
-                        "error" => "Invalid or missing CSRF token"
-                    ];
+                    throw new TokenCSRF_Exception();
                 }
             }else{
                 $value = $this->router->resolve();
             }
-            if(empty($value)){
-                if (!isset($requestTokenApp) && !str_contains($this->request->getPath(),'api')){
-                    $this->response->redirect('/login');
-                }else{
-                    throw new NotFoundException();
-                }
+            if(empty($value) && !isset($requestTokenApp) && !str_contains($this->request->getPath(),'api')){
+                $this->response->redirect('/login');
             }
             //pour changer le type de contenu de la requête
             if(gettype($value) !== 'string' && $value != ""){
@@ -84,18 +77,18 @@ class Application
             }
             echo $value;
         }catch (\Exception $e){
+            $path = "web";
+            if(str_contains($this->request->getPath(),'api')){
+                $path = explode("/", $this->request->getPath());
+                $path = $path[1];
+            }
             $this->response->setStatusCode($e->getCode());
-            if (!isset($requestTokenApp)){
+            if ($path === "api"){
+                echo $e->getMessage();
+            }else{
                 echo $this->router->renderView("_404",[
                     "exceptions" => $e
                 ]);
-            }elseif ($requestTokenApp !== $this->tokenApp){
-                $value =  [
-                    "error" => "Invalid or missing CSRF token"
-                ];
-                echo json_encode($value);
-            }else{
-                echo $e->getMessage();
             }
         }
     }
