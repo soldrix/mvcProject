@@ -13,7 +13,6 @@ $app->router->post('/register', [\App\controllers\AuthControllers::class, "regis
 $app->router->get('/gettt', [SiteController::class, 'testApi']);
 
 $app->middleware->middlewares('authMiddleware::authenticate',function($route){
-
     $route->get('/contact', [SiteController::class, 'test']);
     $route->get('/home', [SiteController::class, 'index']);
     $route->get('/', [SiteController::class, 'redirectHome']);

@@ -17,7 +17,7 @@ class AuthControllers extends Controller
     }
     public function login()
     {
-        if($this->getAuth()){
+        if($this->isAuth()){
             $this->redirect('/home');
             exit("Already authenticated.");
         }
@@ -40,7 +40,7 @@ class AuthControllers extends Controller
     }
     public function registerForm()
     {
-        if($this->getAuth()){
+        if($this->isAuth()){
             $this->redirect('/home');
             exit("Already authenticated.");
         }
@@ -64,6 +64,10 @@ class AuthControllers extends Controller
     }
     public function forgot_password(Request $request)
     {
+        if($this->isAuth()){
+            $this->redirect('/home');
+            exit("Already authenticated.");
+        }
 //        if($this->getAuth()){
 //            $this->redirect('/home');
 //            exit("Already authenticated.");

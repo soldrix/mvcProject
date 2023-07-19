@@ -11,14 +11,14 @@ class Database
 
 
 
-    public function __construct(array $config)
+    public function __construct()
     {
-        $name = $config['DB_NAME'];
-        $host = $config['DB_HOST'];
+        $name = $_ENV['DB_NAME'] ?? "";
+        $host = $_ENV['DB_HOST'] ?? "";
         self::$db_name = $name;
-        $port = $config['DB_PORT'];
-        $user = $config['DB_USER'];
-        $password = $config['DB_PASSWORD'];
+        $port = $_ENV['DB_PORT'] ?? "";
+        $user = $_ENV['DB_USER'] ?? "";
+        $password = $_ENV['DB_PASSWORD'] ?? "";
         $this->pdo = new PDO("mysql:host=$host:$port;dbname=$name", $user, $password);
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -54,7 +54,19 @@ class Database
         }else{
             $this->log("All migrations are applied");
         }
-
+        foreach ($toApllyMigrations as $migration)
+        {
+            if($migration === "." || $migration === ".."){
+                continue;
+            }
+            $classname = "\App\\Models\\".pathinfo($migration, PATHINFO_FILENAME);
+            $instance = new $classname();
+            if($instance->verifyForeignKeyArray()){
+                $this->log("Applying Foreign Key $migration");
+                $instance->addForeignKey();
+                $this->log("Applied Foreign Key $migration");
+            }
+        }
     }
 
     public function createMigrationsTable(): void
@@ -149,7 +161,8 @@ class Database
             $separation[] = $column . " " . implode(' ', $tempArray[$column]);
         }
 //EXTRA,COLUMN_KEY
-        $statement = $this->pdo->prepare("SELECT COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'Users' AND TABLE_SCHEMA = 'mvcPHP';");
+        $dbname = Database::$db_name;
+        $statement = $this->pdo->prepare("SELECT COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'$name' AND TABLE_SCHEMA = '$dbname';");
         $statement->execute();
         $statement = $statement->fetchAll(\PDO::FETCH_ASSOC);
         $arrayStatement = [];
@@ -165,11 +178,11 @@ class Database
                             $arrayType[] = strtoupper($data["COLUMN_TYPE"]);
                         }
                         $arrayType[] = (strtoupper($data["IS_NULLABLE"]) === "YES") ? " NULL" : " NOT NULL";
-                        $diffType = array_diff($arrayType,array_map('strtoupper', $tempArray[$column]));
+                        $diffType = array_diff($arrayType,array_map('strtoupper', $tempArray[$column] ?? []));
 
                         if (isset($data["COLUMN_DEFAULT"])){
                             $defaultVal[] = "DEFAULT ".$data["COLUMN_DEFAULT"];
-                            $diffDefault = array_diff($defaultVal,array_map('strtoupper', $tempArray[$column]));
+                            $diffDefault = array_diff($defaultVal,array_map('strtoupper', $tempArray[$column] ?? []));
                         }
                         if(count($diffType) > 0 || isset($diffDefault)){
                             $this->alterTable($name, "DROP COLUMN" ,$column);

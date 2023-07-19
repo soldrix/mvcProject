@@ -2,7 +2,11 @@
 
 namespace App\lscore;
 use App\controllers\Controller;
+use App\lscore\exception\NotFoundException;
+use App\lscore\exception\TokenAppException;
+use App\lscore\exception\TokenCSRF_Exception;
 use App\lscore\Middlewares\middleware;
+use App\Models\Users;
 
 /**
  * Class Application
@@ -21,7 +25,9 @@ class Application
     public middleware $middleware;
     public csrfToken $csrfToken;
     public Database $database;
-    public function __construct($rootPath, array $config)
+    public Env $env;
+    private $tokenApp = "";
+    public function __construct($rootPath)
     {
         self::$ROUTE_DIR = $rootPath;
         self::$app = $this;
@@ -31,73 +37,61 @@ class Application
         $this->router  = new Router($this->request, $this->response);
         $this->middleware = new middleware();
         $this->csrfToken = new csrfToken();
-        $this->database = new Database($config['db']);
+        $this->env = new Env();
+        $this->env->loadEnv();
+        $this->tokenApp = $_ENV["TOKEN_APP"];
+        $this->database = new Database();
+        if($this->session->get("CSRF_token") === null){
+            $this->session->set('CSRF_token', $this->csrfToken->generateToken(255));
+        }
     }
     public function run()
     {
         $this->router->setLayout(($this->isGuest()) ? "auth" : "app");
+        $requestTokenApp = Application::$app->request->getHeaders('AuthorizationApp');
         try {
-            if(!str_contains($this->request->getPath(),"api")){
-                if($this->request->method() === "post" && ($_POST["csrf-token"] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? "")  !== Application::$app->csrfToken->getToken()){
-                    $this->response->setStatusCode(403);
-                    $value = [
-                        "error" => "Invalid or missing CSRF token"
-                    ];
-                }else{
-                    $value = $this->router->resolve();
-                    if(gettype($value) !== 'string'){
-                        $this->response->setStatusCode(403);
-                        $value = [
-                            "error" => "Invalid or missing CSRF token"
-                        ];
-                    }
+            if($requestTokenApp !== $this->tokenApp && str_contains($this->request->getPath(),'api')){
+                throw new TokenAppException();
+            }elseif(!isset($requestTokenApp)){
+                $CSRF_Request = $_POST["csrf-token"] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? "";
+                $value = $this->router->resolve();
+                if($this->request->method() === "post" && $CSRF_Request  !== $this->csrfToken->getToken() || ($value !== null && gettype($value) !== 'string')){
+                    throw new TokenCSRF_Exception();
                 }
             }else{
                 $value = $this->router->resolve();
             }
-
+            if(empty($value) && !isset($requestTokenApp) && !str_contains($this->request->getPath(),'api')){
+                $this->response->redirect('/login');
+            }
             //pour changer le type de contenu de la requête
             if(gettype($value) !== 'string' && $value != ""){
                 json_encode($value);
                 if(json_last_error() === JSON_ERROR_NONE){
                     $value = json_encode($value);
-                    Header('Content-type: application/json');
+                    Header('Content-Type: application/json');
                 }
-            }else{
-                Header('Content-type: text/html');
+            }
+            else{
+                Header('Content-Type: text/html');
             }
             echo $value;
         }catch (\Exception $e){
+            $path = "web";
+            if(str_contains($this->request->getPath(),'api')){
+                $path = explode("/", $this->request->getPath());
+                $path = $path[1];
+            }
             $this->response->setStatusCode($e->getCode());
-            if(Application::$app->request->getHeaders("Content-Type") !== null){
-                if(Application::$app->request->getHeaders("Content-Type") === "application/json"){
-                    echo $e->getMessage();
-                }
+            if ($path === "api"){
+                echo $e->getMessage();
             }else{
-                $view =  "_404";
-                echo $this->router->renderView($view,[
+                echo $this->router->renderView("_404",[
                     "exceptions" => $e
                 ]);
             }
         }
     }
-
-    /**
-     * @return Controller
-     */
-    public function getController(): Controller
-    {
-        return $this->controller;
-    }
-
-    /**
-     * @param Controller $controller
-     */
-    public function setController(Controller $controller): void
-    {
-        $this->controller = $controller;
-    }
-
     public function login()
     {
         $this->session->set("authStatus",true);
@@ -111,5 +105,9 @@ class Application
     public function isGuest()
     {
         return !$this->session->get('authStatus');
+    }
+    public function UserID()
+    {
+        return Application::$app->session->get('userID');
     }
 }

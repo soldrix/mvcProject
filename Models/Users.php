@@ -13,4 +13,8 @@ class Users extends DBModel
         "created_at" => ["timestamp", "default" => "current_timestamp"]
     ];
     protected  string $table = "users";
+    //example of foreign key :
+//    protected $foreignKey = [
+//        "id_user" => ["REFERENCES" => "users", "on" => "id", "delete" => "cascade", "update" => "cascade"]
+//    ];
 }
