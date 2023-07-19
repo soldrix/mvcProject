@@ -8,6 +8,8 @@ $app->router->post('/usersUpdate', [\App\controllers\AuthControllers::class, 'us
 $app->router->get('/findUser', [\App\controllers\AuthControllers::class, 'findUser']);
 $app->router->get('/test', [\App\controllers\AuthControllers::class, 'testJoin']);
 $app->router->post('/delete/user', [\App\controllers\AuthControllers::class, 'deleteUser']);
+$app->router->post('/testPost', [SiteController::class, 'HandleContact']);
+
 $app->middleware->middlewares('authMiddleware::authenticate',function($route){
     $route->post('/jean', [SiteController::class, 'HandleContact']);
 });

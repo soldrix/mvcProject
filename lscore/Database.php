@@ -11,14 +11,14 @@ class Database
 
 
 
-    public function __construct(array $config)
+    public function __construct()
     {
-        $name = $config['DB_NAME'];
-        $host = $config['DB_HOST'];
+        $name = $_ENV['DB_NAME'] ?? "";
+        $host = $_ENV['DB_HOST'] ?? "";
         self::$db_name = $name;
-        $port = $config['DB_PORT'];
-        $user = $config['DB_USER'];
-        $password = $config['DB_PASSWORD'];
+        $port = $_ENV['DB_PORT'] ?? "";
+        $user = $_ENV['DB_USER'] ?? "";
+        $password = $_ENV['DB_PASSWORD'] ?? "";
         $this->pdo = new PDO("mysql:host=$host:$port;dbname=$name", $user, $password);
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
