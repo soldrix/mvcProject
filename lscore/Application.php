@@ -2,11 +2,9 @@
 
 namespace App\lscore;
 use App\controllers\Controller;
-use App\lscore\exception\NotFoundException;
 use App\lscore\exception\TokenAppException;
 use App\lscore\exception\TokenCSRF_Exception;
 use App\lscore\Middlewares\middleware;
-use App\Models\Users;
 
 /**
  * Class Application
@@ -39,7 +37,7 @@ class Application
         $this->csrfToken = new csrfToken();
         $this->env = new Env();
         $this->env->loadEnv();
-        $this->tokenApp = $_ENV["TOKEN_APP"];
+        $this->tokenApp = $_ENV["TOKEN_APP"] ?? "";
         $this->database = new Database();
         if($this->session->get("CSRF_token") === null){
             $this->session->set('CSRF_token', $this->csrfToken->generateToken(255));
