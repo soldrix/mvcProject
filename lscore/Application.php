@@ -2,11 +2,9 @@
 
 namespace App\lscore;
 use App\controllers\Controller;
-use App\lscore\exception\NotFoundException;
 use App\lscore\exception\TokenAppException;
 use App\lscore\exception\TokenCSRF_Exception;
 use App\lscore\Middlewares\middleware;
-use App\Models\Users;
 
 /**
  * Class Application
@@ -39,7 +37,7 @@ class Application
         $this->csrfToken = new csrfToken();
         $this->env = new Env();
         $this->env->loadEnv();
-        $this->tokenApp = $_ENV["TOKEN_APP"];
+        $this->tokenApp = $_ENV["TOKEN_APP"] ?? "";
         $this->database = new Database();
         if($this->session->get("CSRF_token") === null){
             $this->session->set('CSRF_token', $this->csrfToken->generateToken(255));
@@ -77,10 +75,14 @@ class Application
             }
             echo $value;
         }catch (\Exception $e){
-            $path = "web";
-            if(str_contains($this->request->getPath(),'api')){
-                $path = explode("/", $this->request->getPath());
-                $path = $path[1];
+            $path = explode("/", $this->request->getPath());
+            $path = array_filter($path);
+            foreach ($path as $data){
+                if($data === "api"){
+                    $path = $data;
+                }elseif ($data === "web"){
+                    $path = $data;
+                }
             }
             $this->response->setStatusCode($e->getCode());
             if ($path === "api"){
@@ -92,9 +94,9 @@ class Application
             }
         }
     }
-    public function login()
+    public function login($token)
     {
-        $this->session->set("authStatus",true);
+        $this->session->set("authStatus",$token);
     }
 
     public function logout()

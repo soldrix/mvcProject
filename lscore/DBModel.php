@@ -47,7 +47,8 @@ abstract class DBModel extends Model
         $statement = self::prepare("SELECT " . implode(',',$params) . " FROM $table WHERE "
             . implode(" AND ", $search) . ";");
         $statement->execute();
-        return $statement->fetchAll(\PDO::FETCH_ASSOC);
+        $result =  $statement->fetchObject();
+        return $result;
     }
     public static function delete($id)
     {
