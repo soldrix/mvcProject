@@ -75,10 +75,14 @@ class Application
             }
             echo $value;
         }catch (\Exception $e){
-            $path = "web";
-            if(str_contains($this->request->getPath(),'api')){
-                $path = explode("/", $this->request->getPath());
-                $path = $path[1];
+            $path = explode("/", $this->request->getPath());
+            $path = array_filter($path);
+            foreach ($path as $data){
+                if($data === "api"){
+                    $path = $data;
+                }elseif ($data === "web"){
+                    $path = $data;
+                }
             }
             $this->response->setStatusCode($e->getCode());
             if ($path === "api"){
@@ -90,9 +94,9 @@ class Application
             }
         }
     }
-    public function login()
+    public function login($token)
     {
-        $this->session->set("authStatus",true);
+        $this->session->set("authStatus",$token);
     }
 
     public function logout()

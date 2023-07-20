@@ -114,13 +114,13 @@ public function exemple(\App\lscore\Request $request)
 ##Routes GET
 
 ```php
-$app->router->get('/login', [\App\controllers\AuthControllers::class, 'login'], true);
+$app->router->get('/login', [\App\controllers\AuthController::class, 'login'], true);
 ```
 
 ##Routes POST
 
 ```php
-$app->router->POST('/login', [\App\controllers\AuthControllers::class, 'login'], true);
+$app->router->POST('/login', [\App\controllers\AuthController::class, 'login'], true);
 ```
 ##Option des routes pour GET et POST
 
@@ -129,8 +129,9 @@ $app->router->POST('/login', [\App\controllers\AuthControllers::class, 'login'],
 Exemple : 
 
 Pour relier une fonction d'un controller à une route (exemple avec la fonction login provenant du controller AuthControllers).
+
 ```php
-$app->router->get('/login', [\App\controllers\AuthControllers::class, 'login'], true);
+$app->router->get('/login', [\App\controllers\AuthController::class, 'login'], true);
 ```
 Ou pour afficher une page (login pour login.php qui est situé dans le répertoire views)
 ```php
@@ -139,13 +140,15 @@ $app->router->get('/login', "login", true);
 ###L'option notAuth qui peut prendre deux différentes valeurs
 Exemple :
 La valeur true signifie que la route n'a pas besoin de connexion pour être accédé.
+
 ```php
-$app->router->get('/login', [\App\controllers\AuthControllers::class, 'login'], true);
+$app->router->get('/login', [\App\controllers\AuthController::class, 'login'], true);
 ```
 Ou la valeur false qui est la valeur par défaut pour obliger une connexion avant de pouvoir y accéder.
+
 ```php
-$app->router->get('/login', [\App\controllers\AuthControllers::class, 'login'], false);
-$app->router->get('/login', [\App\controllers\AuthControllers::class, 'login']);
+$app->router->get('/login', [\App\controllers\AuthController::class, 'login'], false);
+$app->router->get('/login', [\App\controllers\AuthController::class, 'login']);
 ```
 
 <!-- Mises en page -->

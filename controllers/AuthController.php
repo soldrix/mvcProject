@@ -8,7 +8,7 @@ use App\lscore\Request;
 use App\lscore\Validation;
 use App\Models\Users;
 
-class AuthControllers extends Controller
+class AuthController extends Controller
 {
     public function redirectLogin()
     {
@@ -34,9 +34,16 @@ class AuthControllers extends Controller
             "email" => ["required", "email"]
         ]);
         if($validation->getErrors()) return $this->render('login',['errors' => $validation->getErrors(), 'data' => $request->getBody()]);
-        Application::$app->login();
-        $this->redirect('/home');
-        die();
+        $user = Users::find(["email" => $request->email]);
+        if (password_verify($request->password, $user->password) && $request->email === $user->email){
+            $token = TokenAuthController::createToken($user->id);
+            Application::$app->login($token);
+            $this->redirect('/home');
+            die();
+        }else{
+            $validation->addErrors(["*" => "You have entered an invalid username or password."]);
+            return $this->render('login',['errors' => $validation->getErrors(), 'data' => $request->getBody()]);
+        }
     }
     public function registerForm()
     {

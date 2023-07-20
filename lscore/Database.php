@@ -126,7 +126,10 @@ class Database
                     if(strtoupper($data) === "CURRENT_TIMESTAMP"){
                         $tempArray[$column][] = strtoupper($key . " " . $data);
                     }else{
-                        $tempArray[$column][] = strtoupper($key) . ' ' . "'" .$data."'" ;
+                        if (!str_contains($data, "'")){
+                            $data = "'" .$data."'";
+                        }
+                        $tempArray[$column][] = strtoupper($key) . ' ' . $data ;
                     }
                 }else{
                     $data = strtoupper($data);
@@ -179,7 +182,6 @@ class Database
                         }
                         $arrayType[] = (strtoupper($data["IS_NULLABLE"]) === "YES") ? " NULL" : " NOT NULL";
                         $diffType = array_diff($arrayType,array_map('strtoupper', $tempArray[$column] ?? []));
-
                         if (isset($data["COLUMN_DEFAULT"])){
                             $defaultVal[] = "DEFAULT ".$data["COLUMN_DEFAULT"];
                             $diffDefault = array_diff($defaultVal,array_map('strtoupper', $tempArray[$column] ?? []));

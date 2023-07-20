@@ -72,29 +72,33 @@ class Router
      */
     public function resolve()
     {
+        $data = false;
+        while ($data === false){
+            //Chemin de la requête
+            $path = $this->request->getPath();
+            //Méthode de la requête
+            $method = $this->request->method();
+            //Route avec connexion
+            $callback = $this->routes[$method.$this->Auth][$path] ?? null;
+            if($callback !== null){
+                //Pour retourner une page
+                if(is_string($callback)){
+                    return $this->renderView($callback);
+                }
+                //Pour récupérer la fonction du controller de la route
+                if(is_array($callback)){
+                    $controller    = new $callback[0];
+                    Application::$app->controller = $controller;
+                    $callback[0] = $controller;
+                }
+                //Pour retourner une page not found si aucune route existe.
+                //Pour utiliser la fonction du controller de la route
+                return call_user_func($callback, $this->request);
+            }
 
-        //Chemin de la requête
-        $path = $this->request->getPath();
-        //Méthode de la requête
-        $method = $this->request->method();
-        //Route avec connexion
-        $callback = $this->routes[$method][$path] ?? null;
-        if($callback !== null){
-            //Pour retourner une page
-            if(is_string($callback)){
-                return $this->renderView($callback);
-            }
-            //Pour récupérer la fonction du controller de la route
-            if(is_array($callback)){
-                $controller    = new $callback[0];
-                Application::$app->controller = $controller;
-                $callback[0] = $controller;
-            }
-            //Pour retourner une page not found si aucune route existe.
-            //Pour utiliser la fonction du controller de la route
-            return call_user_func($callback, $this->request);
+            $data = authMiddleware::verifyRoute();
         }
-        return authMiddleware::verifyRoute();
+        return $data;
     }
     /**
      *Cette fonction permet de retourner une page avec un layout.
@@ -134,12 +138,16 @@ class Router
     {
         $this->layout = $value;
     }
-    public function routeExist($route,$method): bool
+    public function routeExist($path,$method): bool
     {
-        return  ($this->routes[$method][$route] ?? null) !== null;
+        return  ($this->routes[$method][$path] ?? null) !== null;
     }
     public function setAuthRoutes($r)
     {
         $this->Auth = $r;
+    }
+    public function liste()
+    {
+        return $this->routes;
     }
 }
