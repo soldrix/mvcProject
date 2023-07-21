@@ -25,6 +25,7 @@ class Application
     public Database $database;
     public Env $env;
     private $tokenApp = "";
+    private $dataJson = false;
     public function __construct($rootPath)
     {
         self::$ROUTE_DIR = $rootPath;
@@ -54,6 +55,7 @@ class Application
                 $CSRF_Request = $_POST["csrf-token"] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? "";
                 $value = $this->router->resolve();
                 if($this->request->method() === "post" && $CSRF_Request  !== $this->csrfToken->getToken() || ($value !== null && gettype($value) !== 'string')){
+                   $this->dataJson = true;
                     throw new TokenCSRF_Exception();
                 }
             }else{
@@ -85,7 +87,7 @@ class Application
                 }
             }
             $this->response->setStatusCode($e->getCode());
-            if ($path === "api"){
+            if ($path === "api" || $this->dataJson){
                 echo $e->getMessage();
             }else{
                 echo $this->router->renderView("_404",[
