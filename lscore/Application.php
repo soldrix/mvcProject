@@ -52,7 +52,7 @@ class Application
             if($requestTokenApp !== $this->tokenApp && str_contains($this->request->getPath(),'api')){
                 throw new TokenAppException();
             }elseif(!isset($requestTokenApp)){
-                $CSRF_Request =  $this->request->getHeaders("HTTP_X_CSRF_TOKEN") ?? "";
+                $CSRF_Request = $_POST["csrf-token"] ?? $this->request->getHeaders("HTTP_X_CSRF_TOKEN") ?? "";
                 if($this->request->method() === "post" && $CSRF_Request  !== $this->csrfToken->getToken()){
                    $this->dataJson = true;
                     throw new TokenCSRF_Exception();
