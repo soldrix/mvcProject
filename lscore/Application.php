@@ -25,6 +25,7 @@ class Application
     public Database $database;
     public Env $env;
     private $tokenApp = "";
+    private $dataJson = false;
     public function __construct($rootPath)
     {
         self::$ROUTE_DIR = $rootPath;
@@ -51,15 +52,17 @@ class Application
             if($requestTokenApp !== $this->tokenApp && str_contains($this->request->getPath(),'api')){
                 throw new TokenAppException();
             }elseif(!isset($requestTokenApp)){
-                $CSRF_Request = $_POST["csrf-token"] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? "";
-                $value = $this->router->resolve();
-                if($this->request->method() === "post" && $CSRF_Request  !== $this->csrfToken->getToken() || ($value !== null && gettype($value) !== 'string')){
+                $CSRF_Request = $_POST["csrf-token"] ?? $this->request->getHeaders("HTTP_X_CSRF_TOKEN") ?? "";
+                if($this->request->method() === "post" && $CSRF_Request  !== $this->csrfToken->getToken()){
+                   $this->dataJson = true;
                     throw new TokenCSRF_Exception();
+                }else{
+                    $value = $this->router->resolve();
                 }
             }else{
                 $value = $this->router->resolve();
             }
-            if(empty($value) && !isset($requestTokenApp) && !str_contains($this->request->getPath(),'api')){
+            if(empty($value) && !isset($requestTokenApp) && !str_contains($this->request->getPath(),'api') && $this->request->method() !== "post"){
                 $this->response->redirect('/login');
             }
             //pour changer le type de contenu de la requête
@@ -84,13 +87,21 @@ class Application
                     $path = $data;
                 }
             }
-            $this->response->setStatusCode($e->getCode());
-            if ($path === "api"){
+            if (is_int($e->getCode())){
+                $this->response->setStatusCode($e->getCode());
+            }else{
+                $this->response->setStatusCode(200);
+            }
+            if ($path === "api" || $this->dataJson){
                 echo $e->getMessage();
             }else{
-                echo $this->router->renderView("_404",[
-                    "exceptions" => $e
-                ]);
+                if ($e->getCode() === 401){
+                    $this->response->redirect("/login");
+                }else{
+                    echo $this->router->renderView("_404",[
+                        "exceptions" => $e
+                    ]);
+                }
             }
         }
     }
