@@ -57,7 +57,7 @@ class Request
         $body  = new \stdClass();
         $data = (gettype($data) === "string") ? [$data] : $data;
         foreach ($data as $key){
-                $body->$key = $this->getBody()->$key;
+                $body->$key = $this->getBody()->$key ?? null;
         }
         return $body;
 
@@ -86,6 +86,6 @@ class Request
     }
     public function __get($key)
     {
-        return $this->getBody()->$key;
+        return $this->getBody()->$key ?? null;
     }
 }
