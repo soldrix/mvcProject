@@ -148,18 +148,23 @@ abstract class DBModel extends Model
                 }
             }
             if (isset($foreignTable,$foreignId,$onDelete,$onUpdate)){
-
                 $keyName = $table."_".$columnName."_foreign";
-                $dbName = Database::$db_name;
-                $statement = $db->pdo->prepare("SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS C WHERE C.CONSTRAINT_NAME = '$keyName' AND C.TABLE_NAME = '$table' AND C.TABLE_SCHEMA = '$dbName';");
-                $statement->execute();
-                $statement = $statement->fetchAll();
-                if(count($statement) > 0){
-                    $db->pdo->exec("ALTER TABLE ".$dbName.'.'.$table." DROP FOREIGN KEY $keyName");
-                    //for other than mysql
-//                    $db->pdo->exec("ALTER TABLE ".$dbName.'.'.$table." DROP CONSTRAINT $keyName");
-                }
                 $db->pdo->exec("ALTER TABLE $table ADD CONSTRAINT $keyName FOREIGN KEY ($columnName) REFERENCES $foreignTable($foreignId) ON DELETE $onDelete ON UPDATE $onUpdate;");
+            }
+        }
+    }
+    public function removeForeignKey()
+    {
+        $db = \App\lscore\Application::$app->database;
+        $table = $this->table;
+        $dbName = Database::$db_name;
+        $statement = $db->pdo->prepare("SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS C WHERE C.TABLE_NAME = '$table' AND C.TABLE_SCHEMA = '$dbName';");
+        $statement->execute();
+        $statement = $statement->fetchAll(\PDO::FETCH_OBJ);
+        foreach ($statement as $data){
+            if ($data->CONSTRAINT_NAME !== "PRIMARY"){
+                $keyName = $data->CONSTRAINT_NAME;
+                $db->pdo->exec("ALTER TABLE ".$dbName.'.'.$table." DROP FOREIGN KEY $keyName");
             }
         }
     }

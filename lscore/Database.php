@@ -42,6 +42,9 @@ class Database
             }
             $classname = "\App\\Models\\".pathinfo($migration, PATHINFO_FILENAME);
             $instance = new $classname();
+            $this->log("Deleting Foreign Key $migration");
+            $instance->removeForeignKey();
+            $this->log("Deleted Foreign Key $migration");
             $this->log("Applying migration $migration");
             $instance->up();
             $this->log("Applied migration $migration");
