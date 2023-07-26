@@ -87,13 +87,21 @@ class Application
                     $path = $data;
                 }
             }
-            $this->response->setStatusCode($e->getCode());
+            if (is_int($e->getCode())){
+                $this->response->setStatusCode($e->getCode());
+            }else{
+                $this->response->setStatusCode(200);
+            }
             if ($path === "api" || $this->dataJson){
                 echo $e->getMessage();
             }else{
-                echo $this->router->renderView("_404",[
-                    "exceptions" => $e
-                ]);
+                if ($e->getCode() === 401){
+                    $this->response->redirect("/login");
+                }else{
+                    echo $this->router->renderView("_404",[
+                        "exceptions" => $e
+                    ]);
+                }
             }
         }
     }
