@@ -33,7 +33,9 @@ class Validation
                 if(isset($rules[$key])){
                     foreach ((!is_array($rules[$key])) ? [$rules[$key]] : $rules[$key] as $rule)
                     {
-                        self::rules($data, $key, $rule, $errorsMessage);
+                        if ($rule !== ""){
+                            self::rules($data, $key, $rule, $errorsMessage);
+                        }
                     }
                 }
             }
