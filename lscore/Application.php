@@ -2,6 +2,7 @@
 
 namespace App\lscore;
 use App\controllers\Controller;
+use App\lscore\exception\NotFoundException;
 use App\lscore\exception\TokenAppException;
 use App\lscore\exception\TokenCSRF_Exception;
 use App\lscore\Middlewares\middleware;
@@ -57,6 +58,14 @@ class Application
                    $this->dataJson = true;
                     throw new TokenCSRF_Exception();
                 }else{
+                    $path = explode("/", $this->request->getPath());
+                    $path = array_filter($path);
+                    foreach ($path as $data){
+                        if ($data !== "web" && $data !== "api"){
+                            $this->dataJson = true;
+                            throw new NotFoundException();
+                        }
+                    }
                     $value = $this->router->resolve();
                 }
             }else{
