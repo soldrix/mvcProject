@@ -24,7 +24,7 @@ class Validation
         }
         $data = (!is_array($data) || empty($data))
             ? array_map(fn($value) => "", $rules)
-            : array_intersect_key($data, $rules);
+            : $data;
 
         foreach ($rules as $key => $ruleSet) {
             $ruleSet = is_array($ruleSet) ? $ruleSet : [$ruleSet];
