@@ -19,33 +19,17 @@ class Validation
     {
         self::$errorsBags = [];
         self::$rulesKey = array_keys($rules);
-        if(gettype($data) == "object"){
-            //pour changer le format
-            $data = json_decode(json_encode($data), true) ;
+        if (is_object($data)) {
+            $data = get_object_vars($data);
         }
-        //Remplace la valeur de data par null si elle est vide
-        $data = ((gettype($data) !== "array" ) ? isset($data) : count($data) > 0) ? $data : null;
-        //Remplace la valeur de data par la différence entre le tableau data et rules ou par null si data est null
-        $data = (gettype($data) != 'string' && $data !== null) ? array_diff_key($data,array_diff_key($data, $rules)) : null;
-        if (isset($data)){
-            foreach ($data as $key => $value)
-            {
-                if(isset($rules[$key])){
-                    foreach ((!is_array($rules[$key])) ? [$rules[$key]] : $rules[$key] as $rule)
-                    {
-                        self::rules($data, $key, $rule, $errorsMessage);
-                    }
-                }
-            }
-        }else{
-            //Pour retourner les erreurs par rapport au tableau rules
-            foreach ($rules as $key => $values)
-            {
-                $values = (gettype($values) !== "array") ? [$values] : $values;
-                foreach ($values as $value)
-                {
-                    self::rules("",$key,$value,$errorsMessage);
-                }
+        $data = (!is_array($data) || empty($data))
+            ? array_map(fn($value) => "", $rules)
+            : array_intersect_key($data, $rules);
+
+        foreach ($rules as $key => $ruleSet) {
+            $ruleSet = is_array($ruleSet) ? $ruleSet : [$ruleSet];
+            foreach ($ruleSet as $rule) {
+                self::rules($data, $key, $rule, $errorsMessage);
             }
         }
         return new Validation();
@@ -61,45 +45,35 @@ class Validation
      *Pour vérifier les valeurs
      * @param $data array|string valeurs a verifier
      * @param $field string Champs à verifier dans data
-     * @param $key string key de rules
+     * @param $rule_name string key de rules
      * Example : "required"
      * @param array $customMessage  Message personnaliser pour les erreurs
      */
-    private static function rules(array|string $data, string $field, string $key, array $customMessage = [])
+    private static function rules(array|string $data, string $field, string $rule_name, array $customMessage = [])
     {
-        //regex email
-        $email = '/(?:(?:\r\n)?[ \t])*(?:(?:(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*))*@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*))*|(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)*\<(?:(?:\r\n)?[ \t])*(?:@(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*))*(?:,@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*))*)*:(?:(?:\r\n)?[ \t])*)?(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*))*@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*))*\>(?:(?:\r\n)?[ \t])*)|(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)*:(?:(?:\r\n)?[ \t])*(?:(?:(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*))*@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*))*|(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)*\<(?:(?:\r\n)?[ \t])*(?:@(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*))*(?:,@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*))*)*:(?:(?:\r\n)?[ \t])*)?(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*))*@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*))*\>(?:(?:\r\n)?[ \t])*)(?:,\s*(?:(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*))*@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*))*|(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)*\<(?:(?:\r\n)?[ \t])*(?:@(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*))*(?:,@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*))*)*:(?:(?:\r\n)?[ \t])*)?(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|"(?:[^\"\r\\\\]|\\\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*))*@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\\\".\[\]]))|\[([^\[\]\r\\\\]|\\\\.)*\](?:(?:\r\n)?[ \t])*))*\>(?:(?:\r\n)?[ \t])*))*)?;\s*)/';
-
-        $password_confirmation = (isset($data[$field."_confirmation"])) ?  $data[$field."_confirmation"] : "";
-
-        //test par type
+        // Validation simplifiée de l'email
+        $isEmailInvalid = isset($data[$field]) && !filter_var($data[$field], FILTER_VALIDATE_EMAIL);
+        // Vérification de la confirmation du mot de passe
+        $password_confirmation = $data[$field."_confirmation"] ?? "";
+        $isPasswordMismatch = isset($data[$field]) && $data[$field] !== $password_confirmation;
+        // Règles de validation
         $rules = [
-            "required" => ($data[$field] === null || $data[$field] === ''),
-            "email" => (preg_match($email, $data[$field] ?? "", $matches, PREG_OFFSET_CAPTURE, 0) === 0),
-            "password_confirmation" => ($data[$field] !== $password_confirmation)
+            "required" => empty($data[$field]),
+            "email" => $isEmailInvalid,
+            "password_confirmation" => $isPasswordMismatch
         ];
-        //pour changer le message d'erreur par défaut par le message personnalisé.
-        if(count($customMessage) > 0){
-            foreach ($customMessage as $msg => $value){
-                if(str_contains($msg, ".")){
-                    $test = explode('.',$msg);
-                    if($field === $test[0] && $key === $test[1]){
-                        $message = $value;
-                    }
-                }else if ($msg === $key){
-                    $message = $value;
-                }
-            }
+        // Vérification si la règle est violée
+        if (!$rules[$rule_name]) {
+            return;
         }
-        //pour vérifier les valeurs par rapport au type (required)
-        if($rules[$key]){
-            //pour ajouter une erreur avec un message au tableau contenant toutes les erreurs.
-            if ($key === "password_confirmation"){
-                self::$errorsBags[$field][] = (isset($message)) ? $message : self::errorsMessage()[$key];
-                self::$errorsBags[$field."_confirmation"][] = (isset($message)) ? $message : self::errorsMessage()[$key];
-            }else{
-                self::$errorsBags[$field][] = (isset($message)) ? $message : self::errorsMessage()[$key];
-            }
+        // Définition du message d'erreur personnalisé ou par défaut
+        $message = $customMessage["$field.$rule_name"]
+            ?? $customMessage[$rule_name]
+            ?? self::errorsMessage()[$rule_name];
+        // Ajout de l'erreur dans le tableau des erreurs
+        self::$errorsBags[$field][] = $message;
+        if ($rule_name === "password_confirmation") {
+            self::$errorsBags[$field."_confirmation"][] = $message;
         }
     }
     /**
