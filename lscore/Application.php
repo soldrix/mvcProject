@@ -2,6 +2,7 @@
 
 namespace App\lscore;
 use App\controllers\Controller;
+use App\lscore\exception\CustomException;
 use App\lscore\exception\TokenAppException;
 use App\lscore\exception\TokenCSRF_Exception;
 use App\lscore\Middlewares\middleware;
@@ -21,11 +22,7 @@ class Application
     public Controller $controller;
     public Session $session;
     public middleware $middleware;
-    public csrfToken $csrfToken;
-    public Database $database;
     public Env $env;
-    private $tokenApp = "";
-    private $dataJson = false;
     public function __construct($rootPath)
     {
         self::$ROUTE_DIR = $rootPath;
@@ -35,36 +32,23 @@ class Application
         $this->session = new Session();
         $this->router  = new Router($this->request, $this->response);
         $this->middleware = new middleware();
-        $this->csrfToken = new csrfToken();
-        $this->env = new Env();
-        $this->env->loadEnv();
-        $this->tokenApp = $_ENV["TOKEN_APP"] ?? "";
-        $this->database = new Database();
-        if($this->session->get("CSRF_token") === null){
-            $this->session->set('CSRF_token', $this->csrfToken->generateToken(255));
+        try{
+            $this->env = new Env();
+    //            $this->env->loadEnv();
+        }catch (\Exception $e){
+            $this->router->setLayout(($this->isGuest()) ? "auth" : "app");
+            $this->response->setStatusCode($e->getCode() | 200);
+            echo $this->router->renderView("_404",[
+                "exceptions" => $e
+            ]);
+            die();
         }
     }
-    public function run()
+    public function run(): void
     {
         $this->router->setLayout(($this->isGuest()) ? "auth" : "app");
-        $requestTokenApp = Application::$app->request->getHeaders('AuthorizationApp');
         try {
-            if($requestTokenApp !== $this->tokenApp && str_contains($this->request->getPath(),'api')){
-                throw new TokenAppException();
-            }elseif(!isset($requestTokenApp)){
-                $CSRF_Request = $_POST["csrf-token"] ?? $this->request->getHeaders("HTTP_X_CSRF_TOKEN") ?? "";
-                if($this->request->method() === "post" && $CSRF_Request  !== $this->csrfToken->getToken()){
-                   $this->dataJson = true;
-                    throw new TokenCSRF_Exception();
-                }else{
-                    $value = $this->router->resolve();
-                }
-            }else{
-                $value = $this->router->resolve();
-            }
-            if(empty($value) && !isset($requestTokenApp) && !str_contains($this->request->getPath(),'api') && $this->request->method() !== "post"){
-                $this->response->redirect('/login');
-            }
+            $value = $this->router->resolve();
             //pour changer le type de contenu de la requête
             if(gettype($value) !== 'string' && $value != ""){
                 json_encode($value);
@@ -78,49 +62,24 @@ class Application
             }
             echo $value;
         }catch (\Exception $e){
-            $path = explode("/", $this->request->getPath());
-            $path = array_filter($path);
-            foreach ($path as $data){
-                if($data === "api"){
-                    $path = $data;
-                }elseif ($data === "web"){
-                    $path = $data;
-                }
-            }
-            if (is_int($e->getCode())){
-                $this->response->setStatusCode($e->getCode());
-            }else{
-                $this->response->setStatusCode(200);
-            }
-            if ($path === "api" || $this->dataJson){
-                echo $e->getMessage();
-            }else{
-                if ($e->getCode() === 401){
-                    $this->response->redirect("/login");
-                }else{
-                    echo $this->router->renderView("_404",[
-                        "exceptions" => $e
-                    ]);
-                }
-            }
+            $this->response->setStatusCode($e->getCode() | 200);
+            echo $this->router->renderView("_404",[
+                "exceptions" => $e
+            ]);
+            die();
         }
     }
-    public function login($token)
+    public function login($token): void
     {
-        $this->session->set("authStatus",$token);
+        $this->session->set("authToken",$token);
     }
 
-    public function logout()
+    public function logout(): void
     {
-        $this->csrfToken->resetToken();
-        $this->session->remove('authStatus');
+        $this->session->remove('authToken');
     }
-    public function isGuest()
+    public function isGuest(): bool
     {
-        return !$this->session->get('authStatus');
-    }
-    public function UserID()
-    {
-        return Application::$app->session->get('userID');
+        return !$this->session->get('authToken');
     }
 }

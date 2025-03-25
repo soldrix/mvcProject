@@ -21,7 +21,6 @@ class Request
     public function getPath()
     {
         $path = $_SERVER['REQUEST_URI'] ?? '/';
-        $path = ($this->getHeaders("AuthorizationApp") === null) ?  "/web".$path  : $path;
         $positions = strpos($path, '?');
         if($positions === false){
             return $path;
@@ -79,7 +78,8 @@ class Request
                 $body->$key = $value;
             }
         }
-        foreach (($this->method() === "post") ? $_POST : $_GET as $key => $value) {
+        $requestData = ($this->isPost()) ? $_POST : $_GET;
+        foreach ($requestData as $key => $value) {
             $body->$key = $value;
         }
         return $body;

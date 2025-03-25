@@ -1,6 +1,5 @@
 <h1>Contact</h1>
 <form action="/contact" method="post">
-    <?= \App\lscore\Application::$app->csrfToken->loadToken() ?>
     <div class="mb-3">
         <label>Subject</label>
         <input type="text" name="subject" class="form-control">

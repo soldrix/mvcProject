@@ -1,9 +1,5 @@
-<div class="d-flex justify-content-center w-100 flex-column" style="min-height: calc(var(--mainHeight) - var(--navHeight));">
-    <h1 class="align-self-center"><?= $exceptions->getCode() . " - " . $exceptions->getMessage()  ?></h1>
-    <?php
-    if($exceptions->getCode() === 301){
-        Header('location: /');
-    }
-    ?>
+<div class="d-flex justify-content-center container align-items-center" style="min-height: calc(100vh - 60px);">
+    <div class='alert alert-info'>
+        <p class="mb-0"><?= ($exceptions->getCode() !== 0) ? $exceptions->getCode() . " - " : "" ?><?= $exceptions->getMessage()  ?></p>
+    </div>
 </div>
-

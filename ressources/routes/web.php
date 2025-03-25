@@ -16,6 +16,7 @@ $app->middleware->middlewares('authMiddleware::authenticate',function($route){
     $route->get('/contact', [SiteController::class, 'test']);
     $route->get('/home', [SiteController::class, 'index']);
     $route->get('/', [SiteController::class, 'redirectHome']);
+
     $route->GroupController(SiteController::class,function ($route){
         $route->get('/toto' , 'test');
         $route->post('/contact' , 'HandleContact');

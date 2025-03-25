@@ -3,13 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>app</title>
+    <title><?= $onglet_title ?? "App"?></title>
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../css/fontawesome.min.css">
     <script src="../js/all.min.js" defer></script>
     <script src="../js/jquery.min.js" defer></script>
     <script src="../js/bootstrap.bundle.min.min.js" defer></script>
-    <meta name="csrf-token" content="<?=\App\lscore\Application::$app->csrfToken->getToken()?>">
 </head>
 <body>
 <nav class="navbar navbar-expand-lg bg-light">
@@ -60,7 +59,6 @@
                 <button type="button" class="btn btn-pink" onclick="event.preventDefault();
                          document.getElementById('logout-form').submit();">Continuer</button>
                 <form id="logout-form" action="/logout" method="POST" class="d-none">
-                    <?= \App\lscore\Application::$app->csrfToken->loadToken() ?>
                 </form>
             </div>
         </div>

@@ -8,7 +8,6 @@ if( isset($message)){
 ?>
 
 <form action="/register" method="post">
-    <?= \App\lscore\Application::$app->csrfToken->loadToken() ?>
     <div class="mb-3">
         <label>first name</label>
         <input type="text" name="first_name" class="form-control <?= (isset($errors['first_name']) ) ? 'is-invalid' : ''  ?>">

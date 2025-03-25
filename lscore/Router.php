@@ -27,14 +27,6 @@ class Router
         $this->request = $request;
         $this->response = $response;
     }
-    public function setPath($path)
-    {
-        $this->routePath = $path;
-    }
-    public function getRoutePath()
-    {
-        return $this->routePath;
-    }
     /**
      *Cette fonction permet récupérer les routes de type GET et les ajoutes dans un tableau.
      * */
@@ -105,7 +97,7 @@ class Router
      * */
     public function renderView($view, $params = [])
     {
-        $layoutContent = $this->layoutContent();
+        $layoutContent = $this->layoutContent($params["onglet_title"] ?? "App");
         $viewContent = $this->renderOnlyView($view, $params);
         //pour ajouter le contenu d'une page dans le layout
         return str_replace('{{content}}', $viewContent, $layoutContent);
@@ -114,9 +106,11 @@ class Router
     /**
      *Cette fonction permet de changer le layout par rapport au layout stocker.
      * */
-    protected function layoutContent()
+    protected function layoutContent(string $title)
     {
         $layout = $this->layout;
+        //Pour créer la variable pour modifier le titre de l'onglet
+        $onglet_title = $title;
         ob_start();
         require_once Application::$ROUTE_DIR."/ressources/views/layouts/$layout.php";
         return ob_get_clean();

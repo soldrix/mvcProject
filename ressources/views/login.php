@@ -6,7 +6,6 @@
 
         ?>
         <form action="/login" method="post" class="d-flex flex-column align-items-center">
-            <?= \App\lscore\Application::$app->csrfToken->loadToken() ?>
             <div class="mb-3">
                 <input type="text" name="email" value="<?= $data->email ?? '' ?>" placeholder="Adresse mail" class="input-login <?php echo (isset($errors['email']) ) ? 'is-invalid' : ''  ?>">
                 <?php
@@ -28,8 +27,17 @@
                 }
                 ?>
             </div>
+            <div class="mb-3">
+                <input type="password" name="password_confirmation" value="<?= $data->password_confirmation ?? '' ?>" placeholder="Mot de passe" class="input-login <?php echo (isset($errors['password_confirmation']) ) ? 'is-invalid' : ''  ?>">
+                <?php
+                if(isset($errors['password_confirmation'])){
+                    echo "<span class='invalid-feedback' role='alert'>
+                        <strong> ".$errors['password_confirmation'][0]."  </strong>
+                    </span>";
+                }
+                ?>
+            </div>
             <button type="submit" class="btn btn-login">Se connecter</button>
-            <a class="text-center mt-2 text-decoration-none text-muted" href="/forgot-password">j’ai oublié mon mot de passe</a>
         </form>
 </div>
 

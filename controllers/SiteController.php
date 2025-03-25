@@ -2,6 +2,7 @@
 
 namespace App\controllers;
 
+use App\lscore\Application;
 use App\lscore\Request;
 
 class SiteController extends Controller
@@ -16,7 +17,7 @@ class SiteController extends Controller
     }
     public  function index()
     {
-        return $this->render('home');
+        return $this->render('home',["name" => "toto", "onglet_title" => "Home"]);
     }
     public  function contacts()
     {

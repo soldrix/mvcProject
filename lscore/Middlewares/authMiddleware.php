@@ -15,50 +15,39 @@ class authMiddleware extends middleware
 
     public function authenticate($callable)
     {
-        $token = Application::$app->request->getHeaders('Authorization');
-        if (isset($token)){
-            $token = str_replace("Bearer ", '', $token);
-        }
-        if (!isset($token)){
-            $token = Application::$app->session->get('authStatus');
-        }
-        if($token !== null && !str_contains($token, "null")){
-            //change de callback si le callback sans connexion est vide par la page de connexion.
-                return $callable(Application::$app->router);
-        }else{
+        $authToken = Application::$app->session->get('authToken');
+        if($authToken === null || str_contains($authToken, "null"))
+        {
             Application::$app->router->setAuthRoutes('Auth');
-            return $callable(Application::$app->router);
         }
+        return $callable(Application::$app->router);
     }
+
+    /**
+     * @throws NotFoundException
+     *
+     */
     public static function verifyRoute()
     {
         $method = Application::$app->request->method();
         $path = Application::$app->request->getPath();
-        $token = Application::$app->request->getHeaders('Authorization');
-        if (isset($token)){
-            $token = str_replace("Bearer ", '', $token);
-        }else{
-            $token = Application::$app->session->get('authStatus');
+        $authToken = Application::$app->session->get('authToken');
+        if (Application::$app->router->routeExist($path, $method))
+        {
+            return false;
         }
-        if ($token !== null){
-            if(Application::$app->router->routeExist($path,$method.'Auth')){
+        if (Application::$app->router->routeExist($path, $method . 'Auth'))
+        {
+            if ($authToken !== null)
+            {
                 Application::$app->router->setAuthRoutes('Auth');
-                return false;
+            } else
+            {
+                Application::$app->response->redirect('/login');
             }
-            return throw new NotFoundException();
-        }else{
-            if(Application::$app->router->routeExist($path,$method.'Auth')){
-                $path = array_filter(explode("/", $path));
-                if (in_array("api", $path, true)) {
-                    return throw new TokenAuthException();
-                }
-                return throw new NotAuthenticatedException();
-            }
-            if (!str_contains($path,'api')){
-                return "";
-            }
-            return throw new NotFoundException();
+            return false;
         }
+        throw new NotFoundException();
     }
     public function __destruct()
     {
