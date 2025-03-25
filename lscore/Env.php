@@ -3,6 +3,7 @@
 namespace App\lscore;
 
 use App\lscore\exception\CustomException;
+use App\lscore\exception\EnvVariableNotFound;
 
 class Env
 {
@@ -23,8 +24,19 @@ class Env
                 $value = explode("=", str_replace(" ", "", $value));
                 $name = $value[0];
                 $data = $value[1];
-                $_ENV[$name] = $data;
+                $_ENV[$name] = $data ?? '';
             }
         }
+    }
+    /**
+     * @throws EnvVariableNotFound
+     */
+    public function getVariable($name): ?string
+    {
+        $envVar = $_ENV[$name] ?? null;
+        if ($envVar === null){
+            throw  new EnvVariableNotFound("La variable d'environment '{$name}' n'existe pas.");
+        }
+        return $envVar;
     }
 }

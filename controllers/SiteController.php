@@ -3,6 +3,7 @@
 namespace App\controllers;
 
 use App\lscore\Application;
+use App\lscore\exception\EnvVariableNotFound;
 use App\lscore\Request;
 
 class SiteController extends Controller
@@ -15,9 +16,15 @@ class SiteController extends Controller
     {
         $this->redirect('/login');
     }
+
+
     public  function index()
     {
-        return $this->render('home',["name" => "toto", "onglet_title" => "Home"]);
+        $myvar = $this->getEnvVar("test");
+        if ($myvar == ""){
+            $myvar = "yes";
+        }
+        return $this->render('home',["name" => "toto", "onglet_title" => "Home", "mavar" => $myvar]);
     }
     public  function contacts()
     {

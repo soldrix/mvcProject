@@ -1,5 +1,6 @@
 <h1>Home</h1>
 <h3>Welcome <?= $name ?></h3>
+<p>test: <?= $mavar?></p>
 <div id="form">
     <label for="email">Email :</label>
     <input type="text" id="email">

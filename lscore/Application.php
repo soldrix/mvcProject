@@ -34,7 +34,7 @@ class Application
         $this->middleware = new middleware();
         try{
             $this->env = new Env();
-    //            $this->env->loadEnv();
+                $this->env->loadEnv();
         }catch (\Exception $e){
             $this->router->setLayout(($this->isGuest()) ? "auth" : "app");
             $this->response->setStatusCode($e->getCode() | 200);
@@ -62,7 +62,9 @@ class Application
             }
             echo $value;
         }catch (\Exception $e){
-            $this->response->setStatusCode($e->getCode() | 200);
+            if (!headers_sent()) {
+                $this->response->setStatusCode(($e->getCode() !== 0) ? $e->getCode() : 500);
+            }
             echo $this->router->renderView("_404",[
                 "exceptions" => $e
             ]);

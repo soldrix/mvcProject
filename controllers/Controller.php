@@ -25,20 +25,25 @@ class Controller
      *                      - Clé (`nom_de_variable`) : doit être une chaîne de caractères (`string`).
      *                      - Valeur (`valeur`) : peut être de n'importe quel type (`mixed`).
      */
-    public function render($view, $params = [])
+    public function render(string $view, array $params = [])
     {
         return Application::$app->router->renderView($view,$params);
     }
-    public function redirect($url)
+    public function redirect($url): void
     {
         Application::$app->response->redirect($url);
     }
-    public function isAuth(){
+    public function isAuth(): bool
+    {
         return Application::$app->isGuest() === false;
     }
     public function response(int $code, $data)
     {
         Application::$app->response->setStatusCode($code);
         return $data;
+    }
+    public function getEnvVar(string $name): ?string
+    {
+        return Application::$app->env->getVariable(strtoupper($name));
     }
 }
